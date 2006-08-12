@@ -10,7 +10,7 @@ setup(name="feval", \
       description="finite element evaluator", \
       author="Martin P. Lüthi", \
       author_email="luthi@vaw.baug.ethz.ch", \
-      url="http://www.sourceforge.net/projects/feval", \
+      url="http://www.berlios.de/projects/feval", \
       license="GPL", \
       packages=['feval','feval.fecodes',
                 'feval.fecodes.femtool',
