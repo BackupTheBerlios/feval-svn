@@ -1,0 +1,7 @@
+number_of_space_dimensions 1
+echo -no
+element     1  -bar2  1 2
+
+node     1 1.000000
+node     2 2.000000
+

@@ -1,0 +1,17 @@
+# List of 'Magic Words'
+# These are the translations to generic field names for a GMSH input file
+# All GMSH keywords corresponding to generic keywords should be given
+# 
+# GMSH         generic
+#=========================================================================
+[translate]
+
+nod	      coordinates
+nodes	      coordinates
+elm           connectivity
+elements      connectivity
+
+[end]
+
+
+

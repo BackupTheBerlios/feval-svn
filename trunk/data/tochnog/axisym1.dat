@@ -1,0 +1,50 @@
+( Heat transfer, axi-symmetric.
+  One-dimensional.
+  Stationar.
+  Left node prescribed temperature 1 at radius 1.
+  Right node prescribed temperature 0 at radius 2.
+  Heat at left node and right node should be equal, thus
+  temperature gradient ratio at left and right node should be 2/1.)
+
+echo -no
+number_of_space_dimensions 1
+derivatives
+condif_temperature
+end_initia
+
+node 1  1 
+node 2  2 
+element 1  -bar2 1 2 
+
+geometry_point 1  1.  1.e-3
+geometry_point 2  2.  1.e-3
+
+post_point 1  1.
+post_point 2  2.
+
+bounda_unknown 1  -geometry_point 1 -temp
+bounda_time   1  0.0 1.0 100. 1.
+bounda_unknown 2  -geometry_point 2 -temp
+bounda_time   2  0.0 0.0 100. 0.
+
+group_type 0  -condif
+group_condif_density 0  1.0
+group_condif_capacity 0  1.0
+group_condif_conductivity 0  0.1
+group_axisymmetric 0 -yes
+
+control_mesh_refine_globally  1  -h_refinement
+control_mesh_refine_globally  2  -h_refinement
+control_mesh_refine_globally  3  -h_refinement
+control_mesh_refine_globally  4  -h_refinement
+control_mesh_refine_globally  5  -h_refinement
+control_mesh_refine_globally  6  -h_refinement
+
+control_timestep             10  1. 20.0
+(control_print                10  -time_current -post_point_dof)
+
+target_item 1   -post_point_dof 1 -xtemp
+target_value 1   -1.44 0.01
+target_item 2   -post_point_dof 2 -xtemp
+target_value 2   -0.72 0.01
+end_data

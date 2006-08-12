@@ -1,0 +1,216 @@
+
+\section{FEval: Finite Element Evaluation library}
+\label{sec:feval:-finite-elem}
+
+The Finite Element Evaluation library aims at making life easier by providing
+some handy functionality:
+
+\begin{itemize}
+\item The easy transformation of finite element files between different data
+  formats in order to allow coupling of different codes.
+\item The precise evaluation of finite element results in the physical space.
+\item Easy access to different data visualisation and plotting packages.
+\end{itemize}
+
+The library is provided under the GNU General Public License (GPL) and is
+hosted at \texttt{http://feval.sourceforge.net}.
+
+\subsection{Scientific modelling}
+\label{sec:scientific-modelling}
+
+Scientific modelling tasks can seldom be achieved by the use of one single
+codebase.  Often the need arises to cross-validate results with different
+implementations of numerical software, or to couple codes for different
+physical processes (e.g. mechanical and thermal analysis).  The main obstacle
+usually is the generation of input files suitable for the modelling packages
+at hand.  Also the recalculation of model variables from one modelling grid to
+another poses non-trivial problems.\\
+
+The FEval library aims a unified data model with backends to different data
+formats.  New data formats can be described in text files and filters are
+easily implemented.\\
+
+Here is the list of  data formats currently implemented:\\
+
+\begin{tabular}{lcccc}
+\hline
+Code    & \multicolumn{2}{c}{Input file} & \multicolumn{2}{c}{Ouput file} \\
+        & read & write                   &  read & write \\
+\hline
+MARC    & part & part                    &  part & njet  \\
+Tochnog & part & part                    &  part & njet  \\
+FemTool & part & part                    &  part & njet  \\
+GMSH    & yes  & yes                     &       &       \\
+\hline
+\end{tabular}
+
+
+
+\subsection{Implementation}
+\label{sec:implementation}
+
+The FEval package is implemented in the Python programming language
+(\texttt{http://www.python.org}), an easy to learn, yet powerful object
+oriented language.  Python is well integrated into scientific data
+visualisation software such as OpenDX, VTK and Dislin.  Powerful libraries for
+numerical calculations are provided as plug in modules, giving the language
+capabilites similar to those of e.g. Matlab/Octave or IDL/PV-Wave. Best of
+all, Python and many of its modules are free software (aka open source).
+
+\subsection{Input File Formats}
+\label{sec:input-file-formats}
+
+Finite Element codes usually have input files in sophisticated text formats.
+While simple in principle, the sheer amount of user options and the way these
+are expressed in the input file varies wildly between different codes. We make
+the common assumption that the input files consist of sections (sometimes
+called input cards). These sections always start with a ``magic'' word,
+followed by an arbitrary amount of lines containing the input data.  The input
+file is parsed in a procedural way, calling a handler function for each
+``magic word'' (for those who are familiar with XML: like a SAX parser, not a
+DOM parser).
+
+\subsubsection{Parsing}
+\label{sec:input-file-parsing}
+
+The input file parser looks for ``magic'' words in the file and returns all
+lines of text between the starting ``magic'' word and the next (or the end of
+the file). Comments are excluded from the text by a simple comment handling
+strategy: after the ``begin comment string'' look for the ``end comment
+string''.
+
+\subsubsection{Data extraction}
+\label{sec:data-extraction}
+
+The input file parser calls an extractor method for each magic word it
+encounters. This extractor method, if it exists, obtains all text lines
+associated with the ``magic word'' and parses these lines according to its own
+rules. Useful data is extracted and stored in some model data structure.
+
+
+\paragraph{Example}
+\label{sec:example-data-extraction}
+
+As an example, the coordinates are indicated with the magic word
+\texttt{node} and are given in lines of the form\\
+
+\texttt{node 1 1.25 2.4  0.0 }\\
+\texttt{node 2 1.75 2.4  0.0 }\\
+
+In the current implementation the data extractor method of the ``magic word''
+\texttt{node} is called \texttt{extract\_node} and would look like this:\\
+
+\lstset{language=Python,basicstyle=\small}
+\begin{lstlisting}{}
+  def extract_node(lines):
+      line = lines[0]
+      words = line.split()
+      nodeId = int(words[1])
+      coord = map( "".atof, words[2:] )
+      model.setCoordinates( nodeId, coord )
+      return coord
+\end{lstlisting}
+
+By convention, the data extractor method has the name of the ``magic word''
+(\texttt{node} in the example), preceded by \texttt{extract\_} . The line is
+split in its parts (delimited by whitespace in the example), the second token
+is an integer \texttt{nodeId} and the rest are floating point coordinate
+components. These data are then saved in some model data structure with
+\texttt{model.setCoordinates()}.
+
+
+\subsubsection{Data composition}
+\label{sec:data-composition}
+
+The data compositor method is used to write the data to a model input file.
+By convention, the data composition method is called \texttt{compose\_},
+followed by the name of the ``magic word''. The coordinate block of the above
+example would be written with such a method:
+
+\paragraph{Example}
+\label{sec:example-data-compostion}
+
+\lstset{language=Python,basicstyle=\small}
+\begin{lstlisting}{}
+  def compose_node():
+      lines = []
+      cnames = model.getCoordNames()
+      cnames.sort()
+      for id in cnames:
+          coord = model.getCoord(id)
+          ndim  = len(coord)
+          line  = 'node %5i' % (id) + \
+                  ' %f'*ndim % tuple(coord.tolist()) + '\n'
+          lines.append(line)
+      return lines
+\end{lstlisting}
+
+
+\subsubsection{Input file descriptor}
+\label{sec:input-file-descr}
+
+For many purposes it is not necessary (or possible) to implement extractor and
+compositor methods for all fields in an model input file. Furthermore the
+designations for the same thing varies between different finite element codes.
+For this purpose a input file descriptor file contains the necessary data. It
+is in the form of a text file with sections marked in brackets. The
+\texttt{[translate]} section translates between the names in the input file
+and those used in FEval. The \texttt{[extract]} section lists those ``magic
+words'' which should be parsed and extracted. A typical example looks like
+this:
+%
+{\small\tt
+\begin{verbatim}
+# sample input descriptor file
+[translate]
+elements       connectivity
+node           coordinates
+[extract]
+initialize
+userdata
+dirichlet
+neumann
+variables
+[end]
+\end{verbatim}
+}
+
+The ``input file descriptor extractor'' uses the same mechanism to parse the
+descriptor files.
+
+\subsubsection{Creating an input file filter}
+\label{sec:creating-input-filter}
+
+Creating an input file filter is an easy task. You need to the following three
+steps (for purpose of example, we call the file SuperFEM)
+
+\begin{itemize}
+\item Subclass the \texttt{FETextFile} class:\\
+  \lstset{language=Python,basicstyle=\small}
+  \begin{lstlisting}{}
+    class SuperFEMTextFile(FETextFile):
+        type = 'superfem'
+  \end{lstlisting}
+\item create an input file descriptor file \texttt{superfem.fe}.
+\item implement the extractor methods (and possibly the compose methods)
+\end{itemize}
+
+The name of the input file descriptor file should be the same as the the one
+given in the \texttt{type} variable of the \texttt{SuperFEM} class.
+
+\subsection{Output file formats}
+\label{sec:output-file-formats}
+
+Extracting data from output files is much more involved than parsing input
+files. Depending on the fantasy of the model programmer, these files can be in
+any form of binary data format you could think of. If you have a description
+of the output file format (or the code) you're lucky off.  Due to this, no
+general framework can be given. However I am are happy to provide a framework
+to read Fortran output files (\texttt{FortranIO}). Files produced with C code
+should even be simpler to read. You certainly should take care of the endian
+problem (binary representations differ from platform to platform).\\
+
+Luckily Python provides very good binary data extraction functions in the
+standard \texttt{struct} and the (near standard) \texttt{Numeric} modules. The
+\texttt{MarcT16File} class (for MSC MARC) may serve as an example.
+

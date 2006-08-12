@@ -1,0 +1,28 @@
+;; Object examples/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "examples/"
+  :tables (list 
+   (semanticdb-table "gmsh2tochnog.py"
+    :major-mode 'python-mode
+    :tags '(("sys" include nil nil [144 154]) ("feval" include nil nil [155 167]) ("feval.fecodes.gmv.GMVFile" include nil nil [168 207]) ("infilename1" variable nil nil [224 291]) ("infilename2" variable nil nil [292 362]) ("outfilename" variable nil nil [363 424]) ("m1" variable nil nil [487 519]) ("m2" variable nil nil [520 552]) ("mf1" variable nil nil [582 603]) ("mf1" code nil nil [604 629]) ("mf2" variable nil nil [630 651]) ("mf2" code nil nil [652 677]) ("if" code nil nil [733 773]) ("for" code nil nil [773 773]) ("mf1" code nil nil [773 773]) ("mf1" code nil nil [773 773]) ("mf1" code nil nil [773 773]) ("mf1" code nil nil [773 773]) ("mf1" code nil nil [773 773]) ("mf1" code nil nil [773 773]))
+    :file "gmsh2tochnog.py"
+    :pointmax 773
+    :unmatched-syntax 'nil
+    )
+   (semanticdb-table "gmvdiff.py"
+    :major-mode 'python-mode
+    :tags '(("sys" include nil nil [143 153]) ("feval" include nil nil [154 166]) ("feval.fecodes.gmv.GMVFile" include nil nil [167 206]) ("if" code nil nil [229 310]) ("infile1, infile2, outfile" code nil nil [311 351]) ("m1" variable nil nil [413 445]) ("m2" variable nil nil [446 478]) ("mf1" variable nil nil [503 524]) ("mf1" code nil nil [525 546]) ("mf2" variable nil nil [547 568]) ("mf2" code nil nil [569 590]) ("if" code nil nil [646 821]) ("for" code nil nil [822 934]) ("mf1" code nil nil [939 963]) ("mf1" code nil nil [964 985]) ("mf1" code nil nil [986 1007]) ("mf1" code nil nil [1008 1032]) ("mf1" code nil nil [1033 1055]) ("mf1" code nil nil [1057 1079]))
+    :file "gmvdiff.py"
+    :pointmax 1081
+    )
+   (semanticdb-table "marc2fem.py"
+    :major-mode 'python-mode
+    :tags '(("os" include nil nil [175 184]) ("feval.ModelData" include nil nil [185 214]) ("feval.fecodes.marc.MarcFile" include nil nil [215 256]) ("feval.fecodes.femtool.FemtoolFile" include nil nil [257 304]) ("inputfilename" variable nil nil [320 389]) ("outfilename" variable nil nil [390 458]) ("m" variable nil nil [521 536]) ("mf" variable nil nil [566 582]) ("mf" code nil nil [583 609]) ("ff" variable nil nil [642 661]) ("print" code nil nil [807 828]) ("boundnodes" variable nil nil [869 884]) ("try" code nil nil [885 1103]) ("boundnodes" code nil nil [1104 1121]) ("bounddiri" variable nil nil [1122 1136]) ("for" code nil nil [1137 1181]) ("ff" code nil nil [1181 1210]) ("boundnodes" variable nil nil [1279 1317]) ("boundnodes" code nil nil [1318 1335]) ("bounddiri" variable nil nil [1336 1350]) ("for" code nil nil [1351 1395]) ("ff" code nil nil [1395 1424]) ("ff" code nil nil [1455 1484]) ("ff" code nil nil [1557 1594]) ("ff" code nil nil [1595 1632]) ("ff" code nil nil [1633 1670]) ("ff" variable nil nil [1672 1691]) ("ff" variable nil nil [1692 1713]) ("ff" code nil nil [1793 1808]) ("ff" code nil nil [1809 1834]) ("ff" code nil nil [1835 1858]) ("ff" code nil nil [1859 1880]) ("ff" code nil nil [1881 1905]) ("ff" code nil nil [1906 1930]) ("ff" code nil nil [1931 1955]) ("ff" code nil nil [1975 2000]))
+    :file "marc2fem.py"
+    :pointmax 2002
+    )
+   )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0pre3"
+  :semanticdb-version "2.0pre3"
+  )

@@ -1,0 +1,33 @@
+\documentclass[12pt,a4paper]{article}
+%************************************
+\newcounter{chapter}
+
+\usepackage[latin1]{inputenc}
+\usepackage{natbib}
+\usepackage{epsfig,epsf}
+\usepackage{amsmath}
+\usepackage{listings}
+\lstloadlanguages{Python}
+
+\renewcommand{\baselinestretch}{1.0}
+
+%***************************************************************
+%LAYOUT (A4 paper)
+\hoffset-2.64cm          %Zuruecksetzen des .dvi-Defaultwertes (S. 350)
+\voffset-1.20cm          %Teilweise zuruecksetzen des .dvi_default
+\oddsidemargin3.0cm      %Breite des linken Randes
+\textwidth15.0cm         %Textbreite
+\textheight24.2cm        %Textlaenge (Seitenlaenge 29.7cm)
+\parindent0em            %Kein Einruecken bei neuem Absatz
+%***************************************************************
+
+\sloppy 
+
+\pagestyle{plain}
+
+\begin{document}
+
+\input feval
+
+\end{document}
+

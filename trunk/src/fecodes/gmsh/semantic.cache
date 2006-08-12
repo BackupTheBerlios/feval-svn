@@ -1,0 +1,22 @@
+;; Object gmsh/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "gmsh/"
+  :tables (list 
+   (semanticdb-table "GMSHFile.py"
+    :major-mode 'python-mode
+    :tags '(("re" include nil (dependency-file none) [1 10]) ("Numeric" include nil (dependency-file none) [11 25]) ("feval.FEval" include nil (dependency-file none) [39 64]) ("feval.FETextFile" include nil (dependency-file none) [65 95]) ("GMSHFile" type (:superclasses ("FETextFile") :members (("\"\"\"Parse a GMSH input-file
+    Take care of the node pattern which is different from the MARC node
+    pattern which  is applied throughout these routines.
+    (The MARC node pattern is: first the corner nodes, then the side
+    nodes, the Femtool pattern is corner-side-corner-side...)
+
+    The node pattern is saved in the list |Variables|
+    \"\"\"" code nil (reparse-symbol indented_block_body) [129 478]) ("type" variable nil (reparse-symbol indented_block_body) [483 496]) ("shapeFunctionDict" variable nil (reparse-symbol indented_block_body) [540 678]) ("elementTypeDict" variable nil (reparse-symbol indented_block_body) [761 781]) ("for" code nil (reparse-symbol indented_block_body) [838 942]) ("nodePattern" variable nil (reparse-symbol indented_block_body) [999 1015]) ("nodePattern" variable nil (reparse-symbol indented_block_body) [1020 1052]) ("nodePattern" variable nil (reparse-symbol indented_block_body) [1057 1089]) ("nodePattern" variable nil (reparse-symbol indented_block_body) [1094 1134]) ("nodePatternInv" variable nil (reparse-symbol indented_block_body) [1192 1211]) ("nodePatternInv" variable nil (reparse-symbol indented_block_body) [1216 1251]) ("nodePatternInv" variable nil (reparse-symbol indented_block_body) [1256 1291]) ("nodePatternInv" variable nil (reparse-symbol indented_block_body) [1296 1339]) ("__init__" function (:arguments (("self" variable nil (reparse-symbol function_parameters) [1358 1362]) ("model" variable nil (reparse-symbol function_parameters) [1364 1369]))) (reparse-symbol indented_block_body) [1345 1485]) ("isKeyword" function (:arguments (("self" variable nil (reparse-symbol function_parameters) [1504 1508]) ("line" variable nil (reparse-symbol function_parameters) [1510 1514]))) (reparse-symbol indented_block_body) [1490 1762]) ("extract_nodes" function (:arguments (("self" variable nil (reparse-symbol function_parameters) [1785 1789]) ("linelist" variable nil (reparse-symbol function_parameters) [1791 1799]))) (reparse-symbol indented_block_body) [1767 1867]) ("extract_nod" function (:arguments (("self" variable nil (reparse-symbol function_parameters) [1888 1892]) ("linelist" variable nil (reparse-symbol function_parameters) [1894 1902]))) (reparse-symbol indented_block_body) [1872 2236]) ("compose_nod" function (:arguments (("self" variable nil (reparse-symbol function_parameters) [2257 2261]))) (reparse-symbol indented_block_body) [2241 2654]) ("extract_elm" function (:arguments (("self" variable nil (reparse-symbol function_parameters) [2754 2758]) ("linelist" variable nil (reparse-symbol function_parameters) [2760 2768]))) (reparse-symbol indented_block_body) [2738 3166]) ("compose_elm" function (:arguments (("self" variable nil (reparse-symbol function_parameters) [3187 3191]))) (reparse-symbol indented_block_body) [3171 3649])) :type "class") nil [97 3649]) ("if" code nil nil [3660 4062]))
+    :file "GMSHFile.py"
+    :pointmax 4064
+    )
+   )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0pre3"
+  :semanticdb-version "2.0pre3"
+  )

@@ -1,0 +1,19 @@
+# List of 'Magic Words'
+# These are the translations to generic field names for a UNV input file
+# 
+# UNV          generic
+#=========================================================================
+
+[extract]
+
+# nodes
+2411
+# elements
+2412
+# analysis data
+2414
+
+[end]
+
+
+
