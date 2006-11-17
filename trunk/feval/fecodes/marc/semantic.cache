@@ -1,0 +1,24 @@
+;; Object marc/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "marc/"
+  :tables (list 
+   (semanticdb-table "MarcFile.py"
+    :major-mode 'python-mode
+    :tags 'nil
+    :file "MarcFile.py"
+    )
+   (semanticdb-table "MarcT16File.py"
+    :major-mode 'python-mode
+    :tags 'nil
+    :file "MarcT16File.py"
+    )
+   (semanticdb-table "MarcShapeFunctions.py"
+    :major-mode 'python-mode
+    :tags 'nil
+    :file "MarcShapeFunctions.py"
+    )
+   )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0pre3"
+  :semanticdb-version "2.0pre3"
+  )
