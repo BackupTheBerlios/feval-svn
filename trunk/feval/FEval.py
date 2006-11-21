@@ -269,7 +269,7 @@ class FEModel(ModelData):
             return e
 
     def getVariables(self, element, nodvars=None, intpointvars=None):
-        """Get a variable from the model from the |element| given
+        """Get a variable from the model for the |element| given
         The local coordinate of the |element| must be set to the correct value
         (as is the case after a findElement(point) or after explicitly
         setting through element.setLocalCoord(lcoord)).
