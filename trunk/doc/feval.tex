@@ -13,7 +13,7 @@ some handy functionality:
 \end{itemize}
 
 The library is provided under the GNU General Public License (GPL) and is
-hosted at \texttt{http://feval.sourceforge.net}.
+hosted at \texttt{http://feval.berlios.de}.
 
 \subsection{Scientific modelling}
 \label{sec:scientific-modelling}
@@ -41,9 +41,10 @@ MARC    & part & part                    &  part & njet  \\
 Tochnog & part & part                    &  part & njet  \\
 FemTool & part & part                    &  part & njet  \\
 GMSH    & yes  & yes                     &       &       \\
+GMV     & N/A  & N/A                     &  yes  & yes   \\
+XDR     & yes  & yes                     &  yes  & yes   \\
 \hline
 \end{tabular}
-
 
 
 \subsection{Implementation}
@@ -52,10 +53,11 @@ GMSH    & yes  & yes                     &       &       \\
 The FEval package is implemented in the Python programming language
 (\texttt{http://www.python.org}), an easy to learn, yet powerful object
 oriented language.  Python is well integrated into scientific data
-visualisation software such as OpenDX, VTK and Dislin.  Powerful libraries for
-numerical calculations are provided as plug in modules, giving the language
-capabilites similar to those of e.g. Matlab/Octave or IDL/PV-Wave. Best of
-all, Python and many of its modules are free software (aka open source).
+visualisation and numerics software such as OpenDX and VTK.  Powerful
+libraries for numerical calculations are provided as plug in modules, giving
+the language capabilites similar to those of e.g. Matlab/Octave or
+IDL/PV-Wave. Best of all, Python and many of its modules are free software
+(aka open source).
 
 \subsection{Input File Formats}
 \label{sec:input-file-formats}
@@ -86,7 +88,6 @@ The input file parser calls an extractor method for each magic word it
 encounters. This extractor method, if it exists, obtains all text lines
 associated with the ``magic word'' and parses these lines according to its own
 rules. Useful data is extracted and stored in some model data structure.
-
 
 \paragraph{Example}
 \label{sec:example-data-extraction}
@@ -205,12 +206,12 @@ Extracting data from output files is much more involved than parsing input
 files. Depending on the fantasy of the model programmer, these files can be in
 any form of binary data format you could think of. If you have a description
 of the output file format (or the code) you're lucky off.  Due to this, no
-general framework can be given. However I am are happy to provide a framework
-to read Fortran output files (\texttt{FortranIO}). Files produced with C code
+general framework can be given. However I am happy to provide a framework to
+read Fortran output files (\texttt{FortranIO}). Files produced with C code
 should even be simpler to read. You certainly should take care of the endian
 problem (binary representations differ from platform to platform).\\
 
 Luckily Python provides very good binary data extraction functions in the
-standard \texttt{struct} and the (near standard) \texttt{Numeric} modules. The
+standard \texttt{struct} and the (near standard) \texttt{numpy} modules. The
 \texttt{MarcT16File} class (for MSC MARC) may serve as an example.
 
