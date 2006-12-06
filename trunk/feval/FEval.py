@@ -516,6 +516,22 @@ class FEModel(ModelData):
                 (-cp*ss-sp*ct*cs)*x + (-sp*st+cp*ct*cs)*y + (st*cs)*z,
                 ( sp*st)*x          + (-cp*st)*y          + (ct)*z   ))
 
+    def translate(self, dx):
+        """translate the mesh by the amount |dx|
+        which should be given as array of the correct length
+        after this the update method should be called
+        """
+        dd = N.asarray(dx)
+        for node, coord in self.Coord.items():
+            self.Coord[node] = self.Coord[node] + dd
+
+    def scale(self, factor):
+        """scale the mesh with |factor|
+        this just multiplies all coordinate values by |factor|
+        """
+        for node, coord in self.Coord.items():
+            self.Coord[node] = self.Coord[node]*factor
+
     def extractBoundaryModel(self):
         """extract a model that only contains the boundary nodes and sides
         """
@@ -596,7 +612,6 @@ if __name__ == "__main__":
     point = m.getCoordinate(m.getCoordNames()[2])+N.array([-0.13,10.021])
     boundary = m.findModelBoundary(point, N.array([5,-5]), accuracy=0.0000001)
     print 'the boundary is at ', boundary
-
 
 #     print m.getIntPointVar(point,['t'])
  
