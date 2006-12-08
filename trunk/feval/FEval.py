@@ -465,7 +465,8 @@ class FEModel(ModelData):
         |accuracy| gives the accuracy of the node coordinates
         """
         self.makeModelCache()
-        # remove all nodes (Coordinates) not in the index
+        # remove all nodes (Coordinates) not in the index,
+        # i.e. that are not part of an element connectivity
         removenodes = []
         for n in self.Coord:
             if not self.nodeIndex.has_key(n):
@@ -473,24 +474,26 @@ class FEModel(ModelData):
         for n in removenodes:
             del self.Coord[n]
                 
-        # build a hash of the coinciding nodes
-        # only a tuple is hashable, so we transform
-        # coordinates into a tuple
-        allcoords = {}
-        for n, c in self.Coord.items():
-            c = c//accuracy
-            allcoords.setdefault(tuple(c), []).append(n)
-        # clean up duplicate nodes, keep only the first nodes
-        for samenodes in allcoords.values():
-            for node in samenodes[1:]:
-                del self.Coord[node]
-                # update the connectivity array
-                for elem in self.nodeIndex[node]:
-                    elenodes = self.Conn[elem][1]
-                    idx = list(elenodes).index(node)
-                    elenodes[idx] = samenodes[0]
-                # update the sets: TODO
-        
+        # make a list of duplicate nodes
+        nodecoords = N.array(self.Coord.values())
+        nodenames  = N.array(self.Coord.keys())
+        for name, coord in self.Coord.items():
+            samenodes = nodenames[((coord- nodecoords)**2).sum(1) < accuracy]
+            # if there are more than one node, retain the first and remove the rest
+            if len(samenodes) > 1:
+                for node in samenodes[1:]:
+                    # maybe the node has been removed before. In that case we just go on
+                    try:
+                        del self.Coord[node]
+                        # update the connectivity array
+                        for elem in self.nodeIndex[node]:
+                            elenodes = self.Conn[elem][1]
+                            idx = list(elenodes).index(node)
+                            elenodes[idx] = samenodes[0]
+                    except:
+                        pass
+                    # update the sets: TODO
+
         self.makeModelCache()
 
     def rotate(self, phi, theta, psi):
@@ -550,6 +553,7 @@ class FEModel(ModelData):
         return bmodel
         
 
+
 def TestFind():
     """Test function, mainly for profiling purposes"""
     for i in range(50):
@@ -588,13 +592,16 @@ if __name__ == "__main__":
     print m.getAdjacentNodes(2)
     #a = m.findBoundaryElements()
 
-    bmodel = m.extractBoundaryModel()
-    stop
+    #     bmodel = m.extractBoundaryModel()
+    #     stop
 
     m.setCoordinate(777, m.Coord[7])
     m.Conn[23][1][3] = 777
+    m.update()
+
     m.makeModelCache()
     m.sweepNodes()
+    stop
 
     e = m.findClosestElement([20, 20])
     ee = m.findClosestElement([0, 0])
