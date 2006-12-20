@@ -12,6 +12,7 @@ def subdivideHex(model, elem, refinenodes):
     insert the subelements
     """
     assert(elem.shape.name == 'Hex8')
+    elename = str(elem.name)
 
     # swap the element corners depending on the refine node / edge
     swapcorners = [
@@ -146,19 +147,19 @@ def subdivideHex(model, elem, refinenodes):
     # change the order of the corner nodes of the element according to the
     # refinement nodes 
     # this is no problem since the element gets removed at the end
-    e.nodes    = [e.nodes[x] for x in swapcorners[refinenode]]
-    e.nodcoord = [e.nodcoord[x] for x in swapcorners[refinenode]]
+    elem.nodes    = [elem.nodes[x] for x in swapcorners[refinenode]]
+    elem.nodcoord = [elem.nodcoord[x] for x in swapcorners[refinenode]]
 
     # additional nodes on a 2.5th level, only for 4 node side
     if len(refinenodes) == 4:
         coord = elem.findGlobalCoord(N.array([1., 1., 1.5])/3.*2.-1.)
-        m.setCoordinate(elem.name+'_71', coord)
+        model.setCoordinate(elename+'_71', coord)
         coord = elem.findGlobalCoord(N.array([2., 1., 1.5])/3.*2.-1.)
-        m.setCoordinate(elem.name+'_72', coord)
+        model.setCoordinate(elename+'_72', coord)
         coord = elem.findGlobalCoord(N.array([2., 2., 1.5])/3.*2.-1.)
-        m.setCoordinate(elem.name+'_73', coord)
+        model.setCoordinate(elename+'_73', coord)
         coord = elem.findGlobalCoord(N.array([1., 2., 1.5])/3.*2.-1.)
-        m.setCoordinate(elem.name+'_74', coord)
+        model.setCoordinate(elename+'_74', coord)
 
     cornerlist = [0,3,15,12,48,51,63,60]
     for i, corners in enumerate(corneridx):
@@ -166,17 +167,17 @@ def subdivideHex(model, elem, refinenodes):
             if n < 64 and not n in cornerlist:
                 lcoord = N.array((n%4, n//4 %4, n//16))/3.*2. -1.
                 coord  = elem.findGlobalCoord(lcoord)
-                m.setCoordinate(elem.name+'_%d' % n, coord)
-        nodenames = [elem.name+'_%d' % n for n in corners]
+                model.setCoordinate(elename+'_%d' % n, coord)
+        nodenames = [elename+'_%d' % n for n in corners]
         # the order in the list is crucial!
-        for n, nn in zip(elem.nodes, [elem.name+'_%d' % n for n in cornerlist]):
+        for n, nn in zip(elem.nodes, [elename+'_%d' % n for n in cornerlist]):
             try:
                 nodenames[nodenames.index(nn)] = n
             except:
                 pass
 
-        m.setElement(elem.name + '_%s' % i, 'Hex8', nodenames)
-    m.removeElement(e.name)
+        model.setElement(elename + '_%s' % i, 'Hex8', nodenames)
+    model.removeElement(elem.name)
 
 if __name__ == '__main__':
     m = feval.FEval.FEModel()
