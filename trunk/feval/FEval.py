@@ -96,7 +96,7 @@ class FEModel(ModelData):
         """
         ModelData.__init__(self, name)
         self.elementMidPoints = None
-        self.NodeIndex = None
+        self.nodeIndex = None
         self.accuracy = 1.49012e-8
         self.elem_tol = self.elem_btol = 0.0001
         self.makeModelCache()
