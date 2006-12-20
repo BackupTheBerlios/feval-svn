@@ -5,7 +5,7 @@ import numpy as N
 import feval.FEval
 import random
 
-def subdivideHex(model, elem, lnodes):
+def subdivideHex(model, elem, refinenodes):
     """subdivide a Hex8 element |elem|
     around the nodes |lnodes|
     remove |elem| from the model |model| and
@@ -13,14 +13,37 @@ def subdivideHex(model, elem, lnodes):
     """
     assert(elem.shape.name == 'Hex8')
 
+    # swap the element corners depending on the refine node / edge
+    swapcorners = [
+        [0, 1, 2, 3, 4, 5, 6, 7],   # u 0
+        [1, 2, 3, 0, 5, 6, 7, 4],   # u 1
+        [2, 3, 0, 1, 6, 7, 4, 5],   # u 2
+        [3, 0, 1, 2, 7, 4, 5, 6],   # u 3
+        [4, 7, 6, 5, 0, 3, 2, 1],   # o 0
+        [5, 4, 7, 6, 1, 0, 3, 2],   # o 1
+        [6, 5, 4, 7, 2, 1, 0, 3],   # o 2
+        [7, 6, 5, 4, 3, 2, 1, 0],   # o 3
+        [0, 4, 5, 1, 3, 7, 6, 2],   # s 0
+        [1, 5, 6, 2, 0, 4, 7, 3],   # s 1
+        [2, 6, 7, 3, 1, 5, 4, 0],   # s 2
+        [7, 3, 0, 4, 6, 2, 1, 5],   # s 3
+        ]
+    # useful default value
+    refinenode = 0
+
     # one edge needs to be refined
-    if len(lnodes) == 1:
+    if len(refinenodes) == 1:
         corneridx = [[ 0,  1,  5,  4, 16, 17, 21, 20],
                      [ 1,  3, 15,  5, 17, 51, 63, 21],
                      [ 4,  5, 15, 12, 20, 21, 63, 60],
-                     [ 16, 17, 21, 20, 48, 51, 63, 60]
+                     [16, 17, 21, 20, 48, 51, 63, 60]
                      ]
-    elif len(lnodes) == 2:
+        import types
+        if type(refinenodes) == types.ListType:
+            refinenode = refinenodes[0]
+        else:
+            refinenode = refinenodes
+    elif len(refinenodes) == 2:
         corneridx = [
                       [ 0,  1,  5,  4, 16, 17, 21, 20],
                       [ 1,  2,  6,  5, 17, 18, 22, 21],
@@ -34,7 +57,23 @@ def subdivideHex(model, elem, lnodes):
                       [18, 19, 23, 22, 34, 51, 63, 42],
                       [33, 34, 42, 41, 48, 51, 63, 60],
                      ]
-    elif len(lnodes) == 4:
+        edgeindex = {
+                      (0, 1): 0,
+                      (1, 2): 1,
+                      (2, 3): 2,
+                      (0, 3): 3,
+                      (4, 5): 5,
+                      (5, 6): 6,
+                      (6, 7): 7,
+                      (4, 7): 4,
+                      (0, 4): 8,
+                      (1, 5): 9,
+                      (2, 6): 10,
+                      (3, 7): 11
+                     }
+        refinenodes.sort()
+        refinenode = edgeindex[tuple(refinenodes)]
+    elif len(refinenodes) == 4:
         corneridx = [
                       [ 0,  1,  5,  4, 16, 17, 21, 20],
                       [ 1,  2,  6,  5, 17, 18, 22, 21],
@@ -59,15 +98,18 @@ def subdivideHex(model, elem, lnodes):
                       [72, 39, 43, 73, 34, 51, 63, 46],
                       [33, 34, 46, 45, 48, 51, 63, 60],
                     ]
-        coord = elem.findGlobalCoord(N.array([1., 1., 1.5])/3.*2.-1.)
-        m.setCoordinate(elem.name+'71', coord)
-        coord = elem.findGlobalCoord(N.array([2., 1., 1.5])/3.*2.-1.)
-        m.setCoordinate(elem.name+'72', coord)
-        coord = elem.findGlobalCoord(N.array([2., 2., 1.5])/3.*2.-1.)
-        m.setCoordinate(elem.name+'73', coord)
-        coord = elem.findGlobalCoord(N.array([1., 2., 1.5])/3.*2.-1.)
-        m.setCoordinate(elem.name+'74', coord)
-    elif len(lnodes) == 8:
+        edgeindex = {
+                      (0, 1, 2, 3): 0,    # unten
+                      (4, 5, 6, 7): 5,    # oben
+                      (0, 1, 4, 5): 8,    # !!!!!!!! falsche Transfromation
+                      (1, 2, 6, 5): 9,    # rechts
+                      (2, 3, 6, 7): 10,   # hinten
+                      (0, 3, 4, 7): 11,   # links
+                     }
+        refinenodes.sort()
+        refinenode = edgeindex[tuple(refinenodes)]
+
+    elif len(refinenodes) == 8:
         corneridx = [
                       [ 0,  1,  5,  4, 16, 17, 21, 20],
                       [ 1,  2,  6,  5, 17, 18, 22, 21],
@@ -98,37 +140,63 @@ def subdivideHex(model, elem, lnodes):
                       [42, 43, 47, 46, 58, 59, 63, 62],
                     ]
     else:
-        print 'hallo'
+        print 'not implemented, nonsense'
         pass
 
-    for i, idx in enumerate(corneridx):
-        for n in idx:
-            if n < 64 and not n in [0,3,12,15,48,51,60,63]:
+    # change the order of the corner nodes of the element according to the
+    # refinement nodes 
+    # this is no problem since the element gets removed at the end
+    e.nodes    = [e.nodes[x] for x in swapcorners[refinenode]]
+    e.nodcoord = [e.nodcoord[x] for x in swapcorners[refinenode]]
+
+    # additional nodes on a 2.5th level, only for 4 node side
+    if len(refinenodes) == 4:
+        coord = elem.findGlobalCoord(N.array([1., 1., 1.5])/3.*2.-1.)
+        m.setCoordinate(elem.name+'_71', coord)
+        coord = elem.findGlobalCoord(N.array([2., 1., 1.5])/3.*2.-1.)
+        m.setCoordinate(elem.name+'_72', coord)
+        coord = elem.findGlobalCoord(N.array([2., 2., 1.5])/3.*2.-1.)
+        m.setCoordinate(elem.name+'_73', coord)
+        coord = elem.findGlobalCoord(N.array([1., 2., 1.5])/3.*2.-1.)
+        m.setCoordinate(elem.name+'_74', coord)
+
+    cornerlist = [0,3,15,12,48,51,63,60]
+    for i, corners in enumerate(corneridx):
+        for n in corners:
+            if n < 64 and not n in cornerlist:
                 lcoord = N.array((n%4, n//4 %4, n//16))/3.*2. -1.
                 coord  = elem.findGlobalCoord(lcoord)
-                m.setCoordinate(elem.name+'%d' % n, coord)
-        m.setElement(elem.name + '_%s' % i, 'Hex8', [elem.name+'%d' % n for n in idx])
+                m.setCoordinate(elem.name+'_%d' % n, coord)
+        nodenames = [elem.name+'_%d' % n for n in corners]
+        # the order in the list is crucial!
+        for n, nn in zip(elem.nodes, [elem.name+'_%d' % n for n in cornerlist]):
+            try:
+                nodenames[nodenames.index(nn)] = n
+            except:
+                pass
+
+        m.setElement(elem.name + '_%s' % i, 'Hex8', nodenames)
     m.removeElement(e.name)
-
-
 
 if __name__ == '__main__':
     m = feval.FEval.FEModel()
     m.setCoordinate(1, [0.,0.,0.])
-    m.setCoordinate(2, [9.,0.,0.])
-    m.setCoordinate(3, [9.,6.,0.])
-    m.setCoordinate(4, [0.,6.,0.])
-    m.setCoordinate(5, [0.,0.,3.])
-    m.setCoordinate(6, [9.,0.,3.])
-    m.setCoordinate(7, [9.,6.,3.])
-    m.setCoordinate(8, [0.,6.,3.])
+    m.setCoordinate(2, [1.,0.,0.])
+    m.setCoordinate(3, [1.,1.,0.])
+    m.setCoordinate(4, [0.,1.,0.])
+    m.setCoordinate(5, [0.,0.,1.])
+    m.setCoordinate(6, [1.,0.,1.])
+    m.setCoordinate(7, [1.,1.,1.])
+    m.setCoordinate(8, [0.,1.,1.])
     m.setConn('x', 'Hex8', range(1,9))
     m.makeModelCache()
     m.renumberNodes(base = 0)
     
     e =  m.findClosestElement(N.asarray([0., 1., 0.5]))
 
-    subdivideHex(m, e, [0,1,2,3, 4, 5, 6, 7])
+    #subdivideHex(m, e, [0,1,2,3, 4, 5, 6, 7])
+    subdivideHex(m, e, [0,4,1,5])
+    #subdivideHex(m, e, [0])
 
     m.renumberNodes()
     m.renumberElements()
@@ -139,7 +207,6 @@ if __name__ == '__main__':
     mf.setWrite('gmvinput')
     mf.setWrite('nodes')
     mf.setWrite('cells')
-    mf.setWrite('variable')
     mf.setWrite('endgmv')
 
     mf.writeFile('adaptive.gmv.000')
