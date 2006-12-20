@@ -114,9 +114,9 @@ class GMVFile(FETextFile):
         except:
             print '**** Element type %i not defined!' % (elemtype)
             elemtype = ''
-        self.model.setElementConn(self.elemNumber,
-                                  elemtype,
-                                  nodes )
+        self.model.setElement(self.elemNumber,
+                              elemtype,
+                              nodes )
 
     def extract_hex(self, linelist):
         """Extract the cells of type hex"""

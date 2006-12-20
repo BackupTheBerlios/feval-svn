@@ -107,7 +107,7 @@ def subdivideHex(model, elem, lnodes):
                 lcoord = N.array((n%4, n//4 %4, n//16))/3.*2. -1.
                 coord  = elem.findGlobalCoord(lcoord)
                 m.setCoordinate(elem.name+'%d' % n, coord)
-        m.setElementConn(elem.name + '_%s' % i, 'Hex8', [elem.name+'%d' % n for n in idx])
+        m.setElement(elem.name + '_%s' % i, 'Hex8', [elem.name+'%d' % n for n in idx])
     m.removeElement(e.name)
 
 

@@ -110,7 +110,7 @@ class UNVFile(FETextFile):
             label,type,physp,matp,color,nnodes = map(int, linelist[3+2*i].split() )
             nodes = map(int, linelist[4+2*i].split())
             type = self.shapeFunctionDict[type]
-            self.model.setElementConn( label, type, N.asarray(nodes) )
+            self.model.setElement( label, type, N.asarray(nodes) )
 
     def compose_2412(self):
         """compose block 2412 (Elements)"""

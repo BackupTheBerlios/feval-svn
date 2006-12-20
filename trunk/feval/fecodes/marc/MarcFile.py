@@ -69,7 +69,7 @@ class MarcFile(FETextFile):
             for i in range(nnodes):
                 c.append( int(line[(2+i)*cl:(3+i)*cl]) )
             c = N.asarray(c)
-            self.model.setElementConn(id, eletype, c)
+            self.model.setElement(id, eletype, c)
 
     def compose_connectivity(self):
         lines = []

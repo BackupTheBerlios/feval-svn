@@ -202,7 +202,7 @@ class FemtoolFile(FETextFile):
                 elemtype = ''
                 print '**** Element type %i not defined!' % (c[0])
             nodes = N.take( c[1:], self.nodePattern[ elemtype ] )
-            self.model.setElementConn( id, elemtype, nodes )
+            self.model.setElement( id, elemtype, nodes )
 
     def compose_elements(self):
         lines = []
