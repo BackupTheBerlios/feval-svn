@@ -546,7 +546,7 @@ class FEModel(ModelData):
         for elename, sides in belems.items():
             e = self.getElement(elename)
             for s in sides:
-                bmodel.setElementConn('%s-%elename' % (str(elename), s), e.shape.sidetype, e.nodes[e.shape.sidenodes[s]])
+                bmodel.setElement('%s-%elename' % (str(elename), s), e.shape.sidetype, e.nodes[e.shape.sidenodes[s]])
                 for c in e.nodes[e.shape.sidenodes[s]]:
                     bmodel.setCoordinate(c, self.getCoordinate(c))
         bmodel.renumberElements()
