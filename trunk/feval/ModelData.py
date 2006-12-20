@@ -73,9 +73,9 @@ class ModelData:
 
     def setConn(self, id, elemtype, conn):
         """deprecated, use setElement instead"""
-        self.setElementConn(id, elemtype, conn)
+        self.setElement(id, elemtype, conn)
 
-    def setElementConn(self, id, elemtype, conn):
+    def setElement(self, id, elemtype, conn):
         """set element with identifier |id|, type |elemtype|
         and the connectivity list |conn|"""
         self.Conn[id] = (elemtype, N.asarray(conn))
@@ -206,7 +206,7 @@ class ModelData:
             newnodes = []
             for n in item[1]:
                 newnodes.append(trans[n])
-            self.setElementConn(nr, item[0], newnodes)
+            self.setElement(nr, item[0], newnodes)
         if self.Sets.has_key('node'):
             for key, set in self.Sets['node'].items():
                 newnodes = []
