@@ -176,6 +176,8 @@ def subdivideHex(model, elem, refinenodes):
             except:
                 pass
 
+        # bring the nodes in the initial order so that all faces are still the same
+        nodenames = [nodenames[j] for j in N.argsort(swapcorners[refinenode])]
         model.setElement(elename + '_%s' % i, 'Hex8', nodenames)
     model.removeElement(elem.name)
 
@@ -196,8 +198,8 @@ if __name__ == '__main__':
     e =  m.findClosestElement(N.asarray([0., 1., 0.5]))
 
     #subdivideHex(m, e, [0,1,2,3, 4, 5, 6, 7])
-    subdivideHex(m, e, [0,4,1,5])
-    #subdivideHex(m, e, [0])
+    #subdivideHex(m, e, [0,4,1,5])
+    subdivideHex(m, e, [1])
 
     m.renumberNodes()
     m.renumberElements()
@@ -210,7 +212,7 @@ if __name__ == '__main__':
     mf.setWrite('cells')
     mf.setWrite('endgmv')
 
-    mf.writeFile('adaptive.gmv.000')
+    mf.writeFile('A.gmv')
 
 
 
