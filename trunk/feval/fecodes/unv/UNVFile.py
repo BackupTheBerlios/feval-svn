@@ -1,5 +1,5 @@
 import re
-import Numeric; N = Numeric
+import numpy as N
 from feval.FEval import *
 from feval.FETextFile import *
 
@@ -32,12 +32,15 @@ class UNVFile(FETextFile):
     for k,v in shapeFunctionDict.items():
         invShapeFunctionDict[v] = k
 
+    # FIXME: implement and test all the import and export node patterns
+
     # the node pattern is from UNV to Marc
     nodePattern = {}
     nodePattern['Hex20'] = [0,1,2,3, 4,5,6,7, 8,9,10,11, 16,17,18,19, 12,13,14,15]
 
     # the node pattern is from Marc to UNV
     nodePatternInv = {}
+    nodePatternInv['Hex8']  = [0,4,5,1,3,7,6,2]
     nodePatternInv['Hex20'] = [0,1,2,3, 4,5,6,7, 8,9,10,11, 16,17,18,19, 12,13,14,15]
 
     def __init__(self, model):
