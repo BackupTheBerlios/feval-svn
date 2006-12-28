@@ -31,9 +31,14 @@ def subdivideHex(model, elem, refinenodes):
         ]
     # useful default value
     refinenode = 0
+    n_refinenodes = len(refinenodes)
+    if not n_refinenodes in [1,2,4,8]:
+        print 'not implemented, nonsense'
+        print refinenodes
+        n_refinenodes = 8
 
     # one edge needs to be refined
-    if len(refinenodes) == 1:
+    if n_refinenodes == 1:
         corneridx = [[ 0,  1,  5,  4, 16, 17, 21, 20],
                      [ 1,  3, 15,  5, 17, 51, 63, 21],
                      [ 4,  5, 15, 12, 20, 21, 63, 60],
@@ -44,7 +49,7 @@ def subdivideHex(model, elem, refinenodes):
             refinenode = refinenodes[0]
         else:
             refinenode = refinenodes
-    elif len(refinenodes) == 2:
+    elif n_refinenodes == 2:
         corneridx = [
                       [ 0,  1,  5,  4, 16, 17, 21, 20],
                       [ 1,  2,  6,  5, 17, 18, 22, 21],
@@ -73,8 +78,13 @@ def subdivideHex(model, elem, refinenodes):
                       (3, 7): 11
                      }
         refinenodes.sort()
-        refinenode = edgeindex[tuple(refinenodes)]
-    elif len(refinenodes) == 4:
+        if edgeindex.has_key(tuple(refinenodes)):
+            refinenode = edgeindex[tuple(refinenodes)]
+        else:
+            # if the specified edges dont exist refine the whole element
+            # this means that two edges are refined, not a side
+            n_refinenodes = 8
+    elif n_refinenodes == 4:
         corneridx = [
                       [ 0,  1,  5,  4, 16, 17, 21, 20],
                       [ 1,  2,  6,  5, 17, 18, 22, 21],
@@ -108,9 +118,15 @@ def subdivideHex(model, elem, refinenodes):
                       (0, 3, 4, 7): 11,   # links
                      }
         refinenodes.sort()
-        refinenode = edgeindex[tuple(refinenodes)]
+        if edgeindex.has_key(tuple(refinenodes)):
+            refinenode = edgeindex[tuple(refinenodes)]
+        else:
+            # if the specified edges dont exist refine the whole element
+            # this means that two edges are refined, not a side
+            n_refinenodes = 8
 
-    elif len(refinenodes) == 8:
+    # refine around all nodes (i.e. refine the whole element)
+    elif n_refinenodes == 8:
         corneridx = [
                       [ 0,  1,  5,  4, 16, 17, 21, 20],
                       [ 1,  2,  6,  5, 17, 18, 22, 21],
@@ -140,9 +156,6 @@ def subdivideHex(model, elem, refinenodes):
                       [41, 42, 46, 45, 57, 58, 62, 61],
                       [42, 43, 47, 46, 58, 59, 63, 62],
                     ]
-    else:
-        print 'not implemented, nonsense'
-        pass
 
     # change the order of the corner nodes of the element according to the
     # refinement nodes 
