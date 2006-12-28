@@ -176,7 +176,8 @@ def subdivideHex(model, elem, refinenodes):
             except:
                 pass
 
-        # bring the nodes in the initial order so that all faces are still the same
+        # bring the nodes in the initial order
+        # so that all faces are oriented as before refinement
         nodenames = [nodenames[j] for j in N.argsort(swapcorners[refinenode])]
         model.setElement(elename + '_%s' % i, 'Hex8', nodenames)
     model.removeElement(elem.name)
