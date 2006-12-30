@@ -78,7 +78,9 @@ class ModelData:
     def setElement(self, id, elemtype, conn):
         """set element with identifier |id|, type |elemtype|
         and the connectivity list |conn|"""
-        self.Conn[id] = (elemtype, N.asarray(conn))
+        # setting the connectivity as numpy array may change the type
+        # this is a problem for integer and string names
+        self.Conn[id] = (elemtype, conn)
 
     def removeElement(self, id):
         """remove the element with name |id|"""
@@ -204,15 +206,11 @@ class ModelData:
         self.Coord = newCoord
         for nr, item in self.Conn.items():
             newnodes = []
-            for n in item[1]:
-                newnodes.append(trans[n])
-            self.setElement(nr, item[0], newnodes)
+            self.setElement(nr, item[0],
+                            [trans[n] for n in item[1]])
         if self.Sets.has_key('node'):
             for key, set in self.Sets['node'].items():
-                newnodes = []
-                for n in set:
-                    newnodes.append(trans[n])
-                self.Sets['node'][key] = newnodes
+                self.Sets['node'][key] = [trans[n] for n in set]
         if len(self.NodVar) > 0:
             newNodVar = {}
             for n in self.NodVar.keys():
@@ -248,9 +246,11 @@ if __name__ == '__main__':
     m = FEModel()
     from feval.fecodes.marc.MarcFile import *  
     mf = MarcFile(m)
-    mf.readFile('./data/marc/test1.dat')
+    mf.readFile('../data/marc/test1.dat')
     #mf.readInc(2)
 
     vars = m.getNodVarsAsArray()
 
     m.renumberElements(base=0)
+    m.renumberNodes(base=0)
+    
