@@ -339,9 +339,9 @@ class FEModel(ModelData):
         nextnodes = set()
         for elem in self.nodeIndex[node]:
             e = self.getElement(elem)
-            if not node in e.nodes[e.shape.cornernodes]:
+            if not node in N.take(e.nodes, e.shape.cornernodes):
                 return None
-            for nn in e.shape.nextnodes[e.nodes == node][0]:
+            for nn in e.shape.nextnodes[e.nodes.index(node)]:
                 nextnodes.add(e.nodes[nn])
         return list(nextnodes)
 
@@ -359,7 +359,7 @@ class FEModel(ModelData):
             for elename, sides in belems.items():
                 e = self.getElement(elename)
                 for side in sides:
-                    nodes = e.nodes[e.shape.sidenodes[side]]
+                    nodes = N.take(e.nodes, e.shape.sidenodes[side])
                     for n in nodes:
                         bnodes.setdefault(n, {}).setdefault(elename, set()).add(side)
             self.boundaryNodes = bnodes
@@ -459,10 +459,12 @@ class FEModel(ModelData):
         return e.mapNodalVar(N.transpose(e.nodcoord))
 
     def sweepNodes(self, accuracy=1.e-12):
-        """Remove duplicte nodes, throw away unused nodes, update the
+        """Remove duplicate nodes, throw away unused nodes, update the
         connectivity and the set definition
 
         |accuracy| gives the accuracy of the node coordinates
+
+        This is a quite slow, but correct implementation.
         """
         self.makeModelCache()
         # remove all nodes (Coordinates) not in the index,
@@ -479,7 +481,7 @@ class FEModel(ModelData):
         nodenames  = N.array(self.Coord.keys())
         for name, coord in self.Coord.items():
             samenodes = nodenames[((coord- nodecoords)**2).sum(1) < accuracy]
-            # if there are more than one node, retain the first and remove the rest
+            # if there is more than one node, retain the first and remove the rest
             if len(samenodes) > 1:
                 for node in samenodes[1:]:
                     # maybe the node has been removed before. In that case we just go on
