@@ -399,7 +399,6 @@ class FEModel(ModelData):
         """
         # use a dictionary (or a Set) to keep the boundary elements unique
         if not self.boundaryElems or not recalc:
-            print '============ calculating belems ==========='
             belems = {}
             if side != None:
                 for elename in self.getElementNames():
