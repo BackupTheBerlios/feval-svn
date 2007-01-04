@@ -96,13 +96,15 @@ class FEModel(ModelData):
         """
         ModelData.__init__(self, name)
         self.elementMidPoints = None
+        # reset all cached results
         self.nodeIndex = None
-        self.accuracy = 1.49012e-8
-        self.elem_tol = self.elem_btol = 0.0001
-        self.makeModelCache()
         self.boundaryElems = {}
         self.boundaryNodes = {}
         self.allcoord = []
+
+        self.accuracy = 1.49012e-8
+        self.elem_tol = self.elem_btol = 0.0001
+        self.makeModelCache()
         self.verbose = verbose
 
     def update(self):
@@ -116,8 +118,12 @@ class FEModel(ModelData):
 
         Reset the element variables (this is useful when a new
         timestep is read)""" 
-        self.elementCache ={None: None}  # dummy entry
-        self.nodeIndex    = {}
+        # reset all cached results
+        self.elementCache  ={None: None}  # dummy entry
+        self.nodeIndex     = {}
+        self.boundaryElems = {}
+        self.boundaryNodes = {}
+        self.allcoord      = []
         midPoints = []
         try:
             mincoord = self.Coord.values()[0]
@@ -351,7 +357,7 @@ class FEModel(ModelData):
         Returns a dict with node names as keys.
 
         The values are dicts with the elements that contain the node,
-        and a set with the boundary sides of this element.
+        and a list with the boundary sides of this element.
         """
         if not self.boundaryNodes or recalc:
             belems = self.findBoundaryElements(recalc=recalc)
@@ -361,10 +367,26 @@ class FEModel(ModelData):
                 for side in sides:
                     nodes = N.take(e.nodes, e.shape.sidenodes[side])
                     for n in nodes:
-                        bnodes.setdefault(n, {}).setdefault(elename, set()).add(side)
+                        bnodes.setdefault(n, {}).setdefault(elename, list()).append(side)
             self.boundaryNodes = bnodes
         return self.boundaryNodes
 
+    def findBoundarySides(self, recalc=False):
+        """Find all the nodes on the model boundary.
+
+        Returns a dict with side numbers as keys.
+
+        The values are lists with the node names that live on the sides.
+        """
+        # find the nodes on the boundary sides
+        belems = self.findBoundaryElements(recalc=recalc)
+        bsides = {}
+        for elename, sides in belems.items():
+            e = self.getElement(elename)
+            for side in sides:
+                nodes = N.take(e.nodes, e.shape.sidenodes[side])
+                bsides.setdefault(side, set()).update(set(nodes))
+        return bsides
 
     def findBoundaryElements(self, side=None, recalc=False):
         """Find all the elements on the model boundary. If |side| is given,
@@ -377,6 +399,7 @@ class FEModel(ModelData):
         """
         # use a dictionary (or a Set) to keep the boundary elements unique
         if not self.boundaryElems or not recalc:
+            print '============ calculating belems ==========='
             belems = {}
             if side != None:
                 for elename in self.getElementNames():
