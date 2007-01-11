@@ -166,7 +166,9 @@ class ModelData:
 
     def setSet(self, type, name, set):
         """A dictionary of set-types, each containing a
-	    dictionary of sets (lists)"""
+        dictionary of sets (lists)
+        Standard names for the set |type| are 'elem' and 'node'
+        these get updated when the mesh is renumbered"""
         if not self.Sets.has_key(type):
             self.Sets[type] = {}
         self.Sets[type][name] = set
