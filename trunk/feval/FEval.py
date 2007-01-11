@@ -259,20 +259,21 @@ class FEModel(ModelData):
         try:
             return self.elementCache[elename]
         except:
-            conn = self.Conn[elename]
-            nodes = conn[1]
-            sh = ShapeFunctions.shapeFunctions[conn[0]]()
+            pass
+        conn = self.Conn[elename]
+        nodes = conn[1]
+        sh = ShapeFunctions.shapeFunctions[conn[0]]()
 
-            # collect the nodal coordinates
-            nodcoord = []
-            for n in nodes:
-                nodcoord.append( self.Coord[n] )
-            nodcoord = N.array(nodcoord)
+        # collect the nodal coordinates
+        nodcoord = []
+        for n in nodes:
+            nodcoord.append( self.Coord[n] )
+        nodcoord = N.array(nodcoord)
 
-            # invoke an instance of the element
-            e = Element.Element( nodes, sh, nodcoord, elename )
-            self.elementCache[elename] = e
-            return e
+        # invoke an instance of the element
+        e = Element.Element( nodes, sh, nodcoord, elename )
+        self.elementCache[elename] = e
+        return e
 
     def getVariables(self, element, nodvars=None, intpointvars=None):
         """Get a variable from the model for the |element| given
