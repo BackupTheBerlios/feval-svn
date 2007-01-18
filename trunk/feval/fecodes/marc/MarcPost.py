@@ -26,10 +26,19 @@ class MarcPostFile(object):
         except:
             print "could not find increment %d" % inc
 
+        # read the nodal data
+        nodvarinfo = []
+        nnodvar = self.file.node_scalars()
+        for i in range(nnodvar):
+            nodvarinfo.append(self.file.node_scalar_label(i))
+        m.setNodVarInfo( nodvarinfo )
+
         # read the nodes
-        for i in range(self.file.nodes()):
-            node = self.file.node(i)
+        for n in range(self.file.nodes()):
+            node = self.file.node(n)
             self.model.setCoordinate(node.id, N.array([(node.x, node.y, node.z)]))
+            nodvar = [self.file.node_scalar(n, i) for i in range(nnodvar)]
+            self.model.setNodVar( n, N.array(nodvar) )
 
         # read the elements
         for i in range(self.file.elements()):
@@ -38,6 +47,7 @@ class MarcPostFile(object):
             if not sh[2] == elem.len:
                 print 'problem with number of nodes'
             self.model.setElement(elem.id, sh[0], elem.items )
+
 
         m.update()
 
