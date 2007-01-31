@@ -97,7 +97,7 @@ class FEModel(ModelData):
         ModelData.__init__(self, name)
         self.elementMidPoints = None
         # reset all cached results
-        self.nodeIndex = None
+        self.nodeIndex = {}
         self.boundaryElems = {}
         self.boundaryNodes = {}
         self.allcoord = []
@@ -114,7 +114,8 @@ class FEModel(ModelData):
         """Create caches for model quantities to allow fast lookups 
         o an array with the mid-point coordinates of all elements
         o a dictionary (nodeIndex) with the nodes as key and the elements as value
-          (this is the inverse of the connectivity self.Conn)
+          (this is the inverse of the connectivity self.Conn), but also contains
+          loose nodes (not in any connectivity)
 
         Reset the element variables (this is useful when a new
         timestep is read)""" 
@@ -125,22 +126,35 @@ class FEModel(ModelData):
         self.boundaryNodes = {}
         self.allcoord      = []
         midPoints = []
+        self.removeUnusedNodes()
         try:
             mincoord = self.Coord.values()[0]
         except:
             mincoord = N.zeros(3)
         maxcoord = mincoord[:]
-        for k in self.Conn.keys():	 # loop over elements
+        for elem in self.Conn.keys():	 # loop over elements
             coord = []
-            for n in self.Conn[k][1]:    # loop over the nodes
+            for n in self.Conn[elem][1]:    # loop over the nodes
                 coord.append( self.Coord[n] )
                 mincoord = N.minimum(mincoord, self.Coord[n])
                 maxcoord = N.maximum(maxcoord, self.Coord[n])
-                self.nodeIndex.setdefault(n, []).append(k)
+                self.nodeIndex.setdefault(n, []).append(elem)
             midPoints.append( N.asarray(coord).mean(axis=0) )
 
         self.elementMidPoints = N.asarray( midPoints, dtype=N.float_ )
         self.boundingbox      = N.asarray([mincoord, maxcoord])
+        
+    def removeUnusedNodes(self):
+        """remove unused Nodes
+        we should do this on creating the model cache
+        maybe this should be called on reading
+        """
+        usednodes = set()
+        for conn in self.Conn.values():
+            usednodes.update(set((conn[1])))
+        for node in self.Coord.keys():
+            if not node in usednodes:
+                self.Coord.pop(node)
 
     def findClosestNode(self, coord, recalc=True):
         """Find the name of the node closest to |coord|.
@@ -429,7 +443,7 @@ class FEModel(ModelData):
         self.elem_tol, self.elem_btol = accuracy, accuracy
         
         # make a unit vector
-        dir = dir/N.sqrt(N.innerproduct(dir,dir))
+        dir = dir/N.sqrt(N.inner(dir,dir))
 
         e = self.findElement(point)
         # if we start outside the model: return find the next Element inside
@@ -597,8 +611,8 @@ def TestFindModelBoundary():
 
 # Tests
 if __name__ == "__main__":
-    from fecodes.marc.MarcT16File import *
-    from fecodes.marc.MarcFile import *
+#     from fecodes.marc.MarcT16File import *
+#     from fecodes.marc.MarcFile import *
 
 #     m = FEModel(verbose=1)
 #     mf = MarcFile(m)
@@ -608,47 +622,47 @@ if __name__ == "__main__":
 #     elems = m.findElementsFromNodes(bednodes)
 #     stop
 
-    print 'loading the model'
-    ## 2D-model test case
-    m = FEModel(verbose=1)
-    mf = MarcT16File(m, '../data/marc/e7x1b.t16', verbose=1)
-    mf.readInc(2)
+#     print 'loading the model'
+#     ## 2D-model test case
+#     m = FEModel(verbose=1)
+#     mf = MarcT16File(m, '../data/marc/e7x1b.t16', verbose=1)
+#     mf.readInc(2)
 
-    print m.getAdjacentNodes(2)
-    #a = m.findBoundaryElements()
+#     print m.getAdjacentNodes(2)
+#     #a = m.findBoundaryElements()
 
-    #     bmodel = m.extractBoundaryModel()
-    #     stop
+#     #     bmodel = m.extractBoundaryModel()
+#     #     stop
 
-    m.setCoordinate(777, m.Coord[7])
-    m.Conn[23][1][3] = 777
-    m.update()
+#     m.setCoordinate(777, m.Coord[7])
+#     m.Conn[23][1][3] = 777
+#     m.update()
 
-    m.makeModelCache()
-    m.sweepNodes()
-    stop
+#     m.makeModelCache()
+#     m.sweepNodes()
+#     stop
 
-    e = m.findClosestElement([20, 20])
-    ee = m.findClosestElement([0, 0])
+#     e = m.findClosestElement([20, 20])
+#     ee = m.findClosestElement([0, 0])
 
-    print m.findNextElement(e, lcoord = [0, -1]).name
-    print m.findNextElement(e, 0).name
+#     print m.findNextElement(e, lcoord = [0, -1]).name
+#     print m.findNextElement(e, 0).name
 
-    stop
+#     stop
 
-    a = m.findBoundaryElements()
-    stop
+#     a = m.findBoundaryElements()
+#     stop
 
-    point = m.getCoordinate(m.getCoordNames()[2])+N.array([-0.13,0.021])
-    print m.getNodVar(point,['d_x','d_y'])
-    point = m.getCoordinate(m.getCoordNames()[2])+N.array([-0.13,10.021])
-    boundary = m.findModelBoundary(point, N.array([5,-5]), accuracy=0.0000001)
-    print 'the boundary is at ', boundary
+#     point = m.getCoordinate(m.getCoordNames()[2])+N.array([-0.13,0.021])
+#     print m.getNodVar(point,['d_x','d_y'])
+#     point = m.getCoordinate(m.getCoordNames()[2])+N.array([-0.13,10.021])
+#     boundary = m.findModelBoundary(point, N.array([5,-5]), accuracy=0.0000001)
+#     print 'the boundary is at ', boundary
 
-#     print m.getIntPointVar(point,['t'])
+# #     print m.getIntPointVar(point,['t'])
  
 
-    stop
+#     stop
 
     ## 3D-model
 #     try:
@@ -669,24 +683,24 @@ if __name__ == "__main__":
 
 ### profiling
 
-    print 'testing'
-    import profile
+#     print 'testing'
+#     import profile
 
-    m.verbose=0
-    m.makeModelCache()
-    # profile.run('TestFind()')
+#     m.verbose=0
+#     m.makeModelCache()
+#     # profile.run('TestFind()')
 
 #     psyco.bind(Element)
 #     psyco.bind(FEModel)
 #     psyco.bind(ShapeFunctions.ShapeFunction_Quad8)
 
-    m.makeModelCache()
+#     m.makeModelCache()
 #    profile.run('TestFindModelBoundary()')
-def TestFindModelBoundary():
-    """Test function, mainly for profiling purposes"""
-    for c in m.Coord.items():
-        coo = m.findModelBoundary( N.array([c[1][0],0.01]),
-                                   N.array([1,-1]), accuracy=0.00001 )
+# def TestFindModelBoundary():
+#     """Test function, mainly for profiling purposes"""
+#     for c in m.Coord.items():
+#         coo = m.findModelBoundary( N.array([c[1][0],0.01]),
+#                                    N.array([1,-1]), accuracy=0.00001 )
 
 
 # # Tests
@@ -750,3 +764,16 @@ def TestFindModelBoundary():
 
 #     m.makeModelCache()
 # #    profile.run('TestFindModelBoundary()')
+
+    import feval.fecodes.gmv.GMVFile as gmv
+    datapath = '/home/tinu/fismo/trunk/visco3d/model-runs'
+    filename = 'with-tongue,n=1,etab=500,etaff=0.1.gmv'
+    m = FEModel()
+    m.verbose=0
+    m.accuracy = 1.e-20
+    mf = gmv.GMVFile(m)
+    mf.readFile(datapath+'/'+filename)
+    m.removeUnusedNodes()
+    
+    point = N.array([0,0,0])
+    print m.findElement(point).name
