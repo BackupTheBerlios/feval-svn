@@ -229,7 +229,7 @@ class FEModel(ModelData):
             if len(nodes) > 1:
                 elem = self.getElement( e )
                 # take the corner nodes
-                cn = list( N.take(elem.nodes, elem.shape.cornernodes) )
+                cn = list( N.array(elem.nodes)[elem.shape.cornernodes] )
                 cn.append(cn[0])
                 for side in range(len(cn)-1):
                     if cn[side] in nodes and cn[side+1] in nodes:
@@ -247,7 +247,8 @@ class FEModel(ModelData):
         if lcoord != None:
             nextnodes = actelem.shape.nextPattern(lcoord)
         else:
-            nextnodes = actelem.shape.sidenodes[sidenr]
+            nextnodes = list(
+                set(actelem.shape.sidenodes[sidenr]).intersection(actelem.shape.cornernodes))
         # loop over the nodes in the list of the next nodes
         elems = []
         # find all elements that share the nextnodes
@@ -360,7 +361,7 @@ class FEModel(ModelData):
         nextnodes = set()
         for elem in self.nodeIndex[node]:
             e = self.getElement(elem)
-            if not node in N.take(e.nodes, e.shape.cornernodes):
+            if not node in N.array(e.nodes)[e.shape.cornernodes]:
                 return None
             for nn in e.shape.nextnodes[e.nodes.index(node)]:
                 nextnodes.add(e.nodes[nn])
@@ -380,7 +381,7 @@ class FEModel(ModelData):
             for elename, sides in belems.items():
                 e = self.getElement(elename)
                 for side in sides:
-                    nodes = N.take(e.nodes, e.shape.sidenodes[side])
+                    nodes = N.array(e.nodes)[e.shape.sidenodes[side]]
                     for n in nodes:
                         bnodes.setdefault(n, {}).setdefault(elename, list()).append(side)
             self.boundaryNodes = bnodes
@@ -399,7 +400,7 @@ class FEModel(ModelData):
         for elename, sides in belems.items():
             e = self.getElement(elename)
             for side in sides:
-                nodes = N.take(e.nodes, e.shape.sidenodes[side])
+                nodes = N.array(e.nodes)[e.shape.sidenodes[side]]
                 bsides.setdefault(side, set()).update(set(nodes))
         return bsides
 
@@ -454,7 +455,7 @@ class FEModel(ModelData):
             #             pt = point + dist*dir
             return None
 
-        acc = 20.0
+        acc = 10.0
         while acc > accuracy:
             e = self.findElement(point)
             if not e:
@@ -574,7 +575,7 @@ class FEModel(ModelData):
         for node, coord in self.Coord.items():
             self.Coord[node] = self.Coord[node]*factor
 
-    def extractBoundaryModel(self):
+    def extractBoundaryModel(self, triangles=False):
         """extract a model that only contains the boundary nodes and sides
         """
         bmodel = FEModel()
@@ -585,8 +586,16 @@ class FEModel(ModelData):
         for elename, sides in belems.items():
             e = self.getElement(elename)
             for s in sides:
-                bmodel.setElement('%s-%elename' % (str(elename), s), e.shape.sidetype, e.nodes[e.shape.sidenodes[s]])
-                for c in e.nodes[e.shape.sidenodes[s]]:
+                nodes = N.asarray(e.nodes)
+                shape = e.shape
+                if triangles:
+                    for i, tri in enumerate(ShapeFunctions.shapeFunctions[shape.sidetype].triangles):
+                        bmodel.setElement('%s-%elename-%d' % (str(elename), s, i), 'Tri3',
+                                          nodes[shape.sidenodes[s]][tri])
+                else:
+                    bmodel.setElement('%s-%elename' % (str(elename), s), shape.sidetype,
+                                      nodes[shape.sidenodes[s]])
+                for c in nodes[shape.sidenodes[s]]:
                     bmodel.setCoordinate(c, self.getCoordinate(c))
         bmodel.renumberElements()
         return bmodel
