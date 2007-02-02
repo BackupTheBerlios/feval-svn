@@ -134,10 +134,10 @@ class Element:
         lcoord = minimize( self, globalcoord, accuracy )
         return (N.absolute(lcoord) <= 1.+accuracy).all()
 
-
     def setLocalCoord(self, lcoord):
         """set the local coorinate to |lcoord|"""
         self.lcoord = lcoord
+
 
 if __name__ == '__main__':
     
