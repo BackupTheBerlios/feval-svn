@@ -191,7 +191,7 @@ class GMVFile(FETextFile):
             for var in varNames:
                 idx = nodVarInfo.index(var)
                 if var in nodVarInfo:
-                    lines.append('%s 1\n' % var)
+                    lines.append('%s 1\n' % var.replace(' ', '_'))
                     idx = nodVarInfo.index(var)
                     for v in allvars:
                         lines.append('%f ' % v[idx])
