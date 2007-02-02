@@ -118,8 +118,13 @@ class TextFile:
                 map( fct, [linelist] )
 
     def setWrite(self, magicKey):
-        if magicKey in self.MagicWords:
-            self.verbatimData.append(self.magicID+magicKey)
+        import types
+        if type(magicKey) is types.ListType:
+            for k in magicKey:
+                self.verbatimData.append(self.magicID+k)
+        else:
+            if magicKey in self.MagicWords:
+                self.verbatimData.append(self.magicID+magicKey)
 
 
     def skipComment(self, line):
