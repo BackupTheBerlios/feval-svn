@@ -2,7 +2,8 @@
 
 # set the path and import the MARC library
 import sys
-sys.path.append('../../../lib')
+#sys.path.append('../../../lib')
+sys.path.append('/soft/numeric/feval/trunk/lib')
 import py_post as M
 import numpy as N
 import MarcShapeFunctions
@@ -22,34 +23,33 @@ class MarcPostFile(object):
 
     def readInc(self, inc):
         try:
-            self.file.moveto(inc)
+            self.file.moveto(inc+1)
         except:
             print "could not find increment %d" % inc
 
         # read the nodal data
         nodvarinfo = []
-        nnodvar = self.file.node_scalars()
+        nnodvar  = self.file.node_scalars()
+        nnodvect = self.file.node_vectors()
         for i in range(nnodvar):
             nodvarinfo.append(self.file.node_scalar_label(i))
-        m.setNodVarInfo( nodvarinfo )
+        self.model.setNodVarInfo( nodvarinfo )
 
         # read the nodes
         for n in range(self.file.nodes()):
             node = self.file.node(n)
-            self.model.setCoordinate(node.id, N.array([(node.x, node.y, node.z)]))
+            self.model.setCoordinate(node.id, N.array([node.x, node.y, node.z]))
             nodvar = [self.file.node_scalar(n, i) for i in range(nnodvar)]
-            self.model.setNodVar( n, N.array(nodvar) )
+            self.model.setNodVar( node.id, N.array(nodvar) )
 
         # read the elements
         for i in range(self.file.elements()):
             elem = self.file.element(i)
             sh = MarcShapeFunctions.MarcShapeFunctionDict[elem.type]
-            if not sh[2] == elem.len:
-                print 'problem with number of nodes'
-            self.model.setElement(elem.id, sh[0], elem.items )
-
-
-        m.update()
+            # if not sh[2] == elem.len:
+            #     print 'cutting element nodes from %d to %d ' %(elem.len, sh[2])
+            self.model.setElement(elem.id, sh[0], elem.items[:sh[2]] )
+        self.model.update()
 
     def IncrementInfo(self):
         """Plot information about increments"""
@@ -67,9 +67,24 @@ if __name__ == '__main__':
     
     m  = ModelData()
 #     mf = MarcPostFile(m, '../../../data/marc/e7x1b.t16')
-#    mf = MarcPostFile(m, '/home/tinu/projects/gorner/model/marc-riesen/gorner_enhsl.t16')
-    mf = MarcPostFile(m, '/home/tinu/projects/colle/marc/ca8_t.t16')
+    mf = MarcPostFile(m, '/home/tinu/projects/gorner/model/marc-riesen/gorner_nsl.t16')
+#    mf = MarcPostFile(m, '/home/tinu/projects/colle/marc/ca8_t.t16')
     mf.readInc(1)
+    f = mf.file
 
-    print 'test finished'
+    print 'read finished'
+
+    m.renumberNodes()
+    m.renumberElements()
+    m.update()
     
+    import feval.fecodes.gmv.GMVFile as gmv
+    gf = gmv.GMVFile(m)
+
+    gf.setWrite('gmvinput')
+    gf.setWrite('nodes')
+    gf.setWrite('cells')
+    gf.setWrite('variable')
+    gf.setWrite('endgmv')
+
+    gf.writeFile('/home/tinu/projects/gorner/model/marc-riesen/gorner_nsl.gmv')
