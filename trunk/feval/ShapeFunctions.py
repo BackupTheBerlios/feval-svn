@@ -51,7 +51,7 @@ class ShapeFunctionPrototype:
     nsides        = 0      # number of element sides
     cornernodes   = N.array([])     # list of corner nodes
     sidenodes     = N.array([])     # list of nodes on the side with index 
-    nextnodes     = N.array([])     # list of adjacent nodes
+    nextnodes     = N.array([])     # list of nodes that are adjecent to the node with index 
     lcoordGauss   = None
     gaussShape    = None
     gaussShapeInv = None
@@ -113,6 +113,7 @@ class ShapeFunction_Tri3(ShapeFunctionPrototype):
                    [0,2],
                    [0,1],
                    ])
+    triangles   = N.array([[0,1,2]])
     #!!!! worng
     gaussDist = 0.577350269189626  # 1./N.sqrt(3)
     lcoordGauss = N.array([ [-1., -1.],
@@ -180,6 +181,8 @@ class ShapeFunction_Quad4(ShapeFunctionPrototype):
                    [1,3],
                    [0,2],
                    ])
+    triangles   = N.array([[0,1,3],
+                           [1,2,3]])
     gaussDist = 0.577350269189626  # 1./N.sqrt(3)
     lcoordGauss = N.array([ [-1., -1.],
                             [ 1., -1.],
@@ -251,6 +254,12 @@ class ShapeFunction_Quad8(ShapeFunctionPrototype):
                    [1,3],
                    [0,2],
                    ])
+    triangles   = N.array([[7,0,4],
+                           [4,1,5],
+                           [5,2,6],
+                           [6,3,7],
+                           [7,4,5],
+                           [5,6,7]])
     gaussDist = 0.774596669241483  # = N.sqrt(0.6)
     lcoordGauss = N.array([ [-1., -1.],
                             [ 0., -1.],
@@ -478,12 +487,12 @@ class ShapeFunction_Hex20(ShapeFunctionPrototype):
     nsides      = 6
     sidetype    = 'Quad8'
     sidenodes   = N.array(
-                  [[0,3,2,1],
-                   [0,1,5,4],
-                   [1,2,6,5],
-                   [2,3,7,6],
-                   [3,0,4,7],
-                   [4,5,6,7]
+                  [[0,11,3,10,2,9,1,8],
+                   [0,8,1,17,5,12,4,16],
+                   [1,9,2,18,6,13,5,17],
+                   [2,10,3,19,7,14,6,18],
+                   [3,11,0,16,4,15,7,19],
+                   [4,12,5,13,6,14,7,15]
                    ])
     nextnodes   = N.array(
                   [[1,3,4],
