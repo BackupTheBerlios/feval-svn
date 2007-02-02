@@ -4,7 +4,8 @@
 
 import os, re, struct
 from feval.FortranIO import FortranBinaryFile
-import Numeric; N = Numeric
+#import Numeric; N = Numeric
+import numpy as N
 
 #============================================================================
 # try to use Psyco (psyco.sourceforge.net)
@@ -68,7 +69,7 @@ class MarcT16File(FortranBinaryFile):
     import MarcShapeFunctions 
     shapeFunctionDict = MarcShapeFunctions.MarcShapeFunctionDict
     
-    def __init__(self, model, filename, mode='r', endian = '>', verbose=0):
+    def __init__(self, model, filename, mode='r', endian = '@', verbose=0):
         self.model = model
         # big endian is only for files calculated on Suns or HP
         # otherwise use '<'
@@ -170,6 +171,7 @@ class MarcT16File(FortranBinaryFile):
     def _readBlock1(self):
         title = self.__readRecord('c4')
         self.model.setName( title.strip() )
+        stop
 
     def _readBlocks2to13(self):
         # Lists with the node and element names
@@ -472,7 +474,7 @@ if __name__ == '__main__':
 
 
     m  = ModelData()
-    mf = MarcT16File(m, '../../data/marc/e7x1b.t16')
+    mf = MarcT16File(m, '../../../data/marc/e7x1b.t16')
     mf.readInc(1)
 
     print 'test finished'
@@ -480,3 +482,4 @@ if __name__ == '__main__':
 
 
 
+    
