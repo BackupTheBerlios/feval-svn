@@ -100,7 +100,6 @@ class FEModel(ModelData):
         self.nodeIndex = {}
         self.boundaryElems = {}
         self.boundaryNodes = {}
-        self.allcoord = []
 
         self.accuracy = 1.49012e-8
         self.elem_tol = self.elem_btol = 0.0001
@@ -124,7 +123,6 @@ class FEModel(ModelData):
         self.nodeIndex     = {}
         self.boundaryElems = {}
         self.boundaryNodes = {}
-        self.allcoord      = []
         midPoints = []
         self.removeUnusedNodes()
         try:
@@ -160,9 +158,8 @@ class FEModel(ModelData):
         """Find the name of the node closest to |coord|.
         the key of the node-dictionary is returned
         """
-        if len(self.allcoord) == 0 or recalc:
-            self.allcoord = N.array(self.Coord.values())
-        idx = N.sum((self.allcoord - coord)**2, axis=1).argmin()
+        allcoord = N.array(self.Coord.values())
+        idx = N.sum((allcoord - coord)**2, axis=1).argmin()
         return self.Coord.keys()[idx]
 
     def findClosestElement(self, coord):
@@ -575,7 +572,7 @@ class FEModel(ModelData):
         for node, coord in self.Coord.items():
             self.Coord[node] = self.Coord[node]*factor
 
-    def extractBoundaryModel(self, triangles=False):
+    def extractBoundaryModel(self, triangles=False, faces=range(6)):
         """extract a model that only contains the boundary nodes and sides
         """
         bmodel = FEModel()
@@ -586,17 +583,18 @@ class FEModel(ModelData):
         for elename, sides in belems.items():
             e = self.getElement(elename)
             for s in sides:
-                nodes = N.asarray(e.nodes)
-                shape = e.shape
-                if triangles:
-                    for i, tri in enumerate(ShapeFunctions.shapeFunctions[shape.sidetype].triangles):
-                        bmodel.setElement('%s-%elename-%d' % (str(elename), s, i), 'Tri3',
-                                          nodes[shape.sidenodes[s]][tri])
-                else:
-                    bmodel.setElement('%s-%elename' % (str(elename), s), shape.sidetype,
-                                      nodes[shape.sidenodes[s]])
-                for c in nodes[shape.sidenodes[s]]:
-                    bmodel.setCoordinate(c, self.getCoordinate(c))
+                if s in faces:
+                    nodes = N.asarray(e.nodes)
+                    shape = e.shape
+                    if triangles:
+                        for i, tri in enumerate(ShapeFunctions.shapeFunctions[shape.sidetype].triangles):
+                            bmodel.setElement('%s-%elename-%d' % (str(elename), s, i), 'Tri3',
+                                              nodes[shape.sidenodes[s]][tri])
+                    else:
+                        bmodel.setElement('%s-%elename' % (str(elename), s), shape.sidetype,
+                                          nodes[shape.sidenodes[s]])
+                    for c in nodes[shape.sidenodes[s]]:
+                        bmodel.setCoordinate(c, self.getCoordinate(c))
         bmodel.renumberElements()
         return bmodel
         
