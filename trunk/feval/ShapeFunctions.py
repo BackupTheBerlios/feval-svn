@@ -188,25 +188,17 @@ class ShapeFunction_Quad4(ShapeFunctionPrototype):
     def calcShape(self, lcoord):
         x, y = lcoord
         xy = x*y
-        self.f[0] = 1.0-x-y+xy
-        self.f[1] = 1.0+x-y-xy
-        self.f[2] = 1.0+x+y+xy
-        self.f[3] = 1.0-x+y-xy
-        self.f = self.f*0.25
-        return self.f
+        return 0.25*N.array([
+            1.0-x-y+xy,
+            1.0+x-y-xy,
+            1.0+x+y+xy,
+            1.0-x+y-xy ])
 
     def calcShapeDeriv(self, lcoord):
         x, y = lcoord
-        self.df[0,0] = -1.0+y
-        self.df[0,1] =	1.0-y
-        self.df[0,2] =	1.0+y
-        self.df[0,3] = -1.0-y
-        self.df[1,0] = -1.0+x
-        self.df[1,1] = -1.0-x
-        self.df[1,2] =	1.0+x
-        self.df[1,3] =	1.0-x
-        self.df = self.df*0.25
-        return self.df
+        return 0.25*N.array([
+            [ -1.0+y,  1.0-y, 1.0+y, -1.0-y],
+            [ -1.0+x, -1.0-x, 1.0+x, 1.0-x ]])
 
     def nextPattern(self, lcoord):
         x,y = lcoord / max(N.absolute(lcoord)) * 1.01
