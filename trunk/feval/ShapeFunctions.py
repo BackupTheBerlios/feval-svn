@@ -1,3 +1,5 @@
+# -*- coding: iso-8859-1 -*-
+
 #============================================================
 #
 #           This file is part of FEval, a module for the
@@ -60,9 +62,11 @@ class ShapeFunctionPrototype:
         self.f  = N.zeros(self.nnodes, N.float_)
         self.df = N.zeros( (self.dim, self.nnodes), N.float_)
 
+    # must be overrridden by the shape function
     def calcShape(self, lcoord):
         return None
 
+    # must be overrridden by the shape function
     def calcShapeDeriv(self, lcoord):
         return None
 
