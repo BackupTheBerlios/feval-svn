@@ -70,14 +70,6 @@ class ShapeFunctionPrototype:
     def calcShapeDeriv(self, lcoord):
         return None
 
-    def evalShape(self, lcoord):
-        self.calcShape(lcoord)
-        return self.f
-
-    def evalShapeDeriv(self, lcoord):
-        self.calcShapeDeriv(lcoord)
-        return self.df
-
     def nextPattern(self, lcoord):
         return [0]
 
