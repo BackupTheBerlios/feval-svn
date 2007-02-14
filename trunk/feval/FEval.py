@@ -287,7 +287,7 @@ class FEModel(ModelData):
         self.elementCache[elename] = e
         return e
 
-    def getVariables(self, element, nodvars=None, intpointvars=None):
+    def getVariables(self, element, nodvars=None, intpointvars=None, deriv=False):
         """Get a variable from the model for the |element| given
         The local coordinate of the |element| must be set to the correct value
         (as is the case after a findElement(point) or after explicitly
@@ -311,7 +311,7 @@ class FEModel(ModelData):
                     nodvar.append( self.NodVar[node][idx] )
                 resNodvars.append( nodvar )
             resNodvars = N.asarray(resNodvars, dtype=N.float_)
-            resNodvars = element.mapNodalVar(resNodvars)
+            resNodvars = element.mapNodalVar(resNodvars, deriv=deriv)
 
         # find the appropriate integration point variable
         if intpointvars:
@@ -320,12 +320,11 @@ class FEModel(ModelData):
             for postvar in intpointvars:
                 idx.append(self.IntPointVarInfo.index(postvar))
             resIntPointVars = N.take( resIntPointVars, idx, 1 )
-            resIntPointVars = element.mapIntPointVar(resIntPointVars)
+            resIntPointVars = element.mapIntPointVar(resIntPointVars, deriv=deriv)
 
         return resNodvars, resIntPointVars
 
-
-    def getNodVar(self, point, postvars, element=None, lcoord=None):
+    def getNodVar(self, point, postvars, deriv=False):
         """Find the values of the variables |postvars| at
         the global coordinate |point|
         """
@@ -334,11 +333,10 @@ class FEModel(ModelData):
         # check wether the point is within the model
         if not element:
             return None
-        resNodvars, resIntPointVars = self.getVariables(element, nodvars=postvars)
+        resNodvars, resIntPointVars = self.getVariables(element, nodvars=postvars, deriv=deriv)
         return resNodvars
 
-
-    def getIntPointVar(self, point, postvars, element=None, lcoord=None):
+    def getIntPointVar(self, point, postvars, deriv=False):
         """Find the values of the integration point variables |postvars| at 
         the global coordinate |point|
         """
@@ -347,7 +345,7 @@ class FEModel(ModelData):
         # check wether the point is within the model
         if not element:
             return None
-        resNodvars, resIntPointVars = self.getVariables(element, intpointvars=postvars)
+        resNodvars, resIntPointVars = self.getVariables(element, intpointvars=postvars, deriv=deriv)
         return resIntPointVars
 
     def getAdjacentNodes(self, node):
@@ -618,8 +616,8 @@ def TestFindModelBoundary():
 
 # Tests
 if __name__ == "__main__":
-#     from fecodes.marc.MarcT16File import *
-#     from fecodes.marc.MarcFile import *
+    from fecodes.marc.MarcPost import *
+    from fecodes.marc.MarcFile import *
 
 #     m = FEModel(verbose=1)
 #     mf = MarcFile(m)
@@ -631,9 +629,19 @@ if __name__ == "__main__":
 
 #     print 'loading the model'
 #     ## 2D-model test case
-#     m = FEModel(verbose=1)
-#     mf = MarcT16File(m, '../data/marc/e7x1b.t16', verbose=1)
-#     mf.readInc(2)
+    m = FEModel(verbose=1)
+    mf = MarcPostFile(m, '../data/marc/e7x1b.t16')
+    mf.readInc(1)
+
+    for n, c in m.Coord.items():
+        m.setNodVar(n, c[:2])
+    m.setNodVarInfo(['X','Y'])
+    
+    point = N.array([7,10,0])
+    print m.findElement(point).name
+    print m.getNodVar(point, m.NodVarInfo)
+    print m.getNodVar(point+N.array([0.1,0.1,0]), m.NodVarInfo)
+    print m.getNodVar(point, m.NodVarInfo, deriv=True)
 
 #     print m.getAdjacentNodes(2)
 #     #a = m.findBoundaryElements()
@@ -727,8 +735,8 @@ if __name__ == "__main__":
 #     print 'loading the model'
 #     ## 2D-model test case
 #     m = FEModel(verbose=1)
-#     mf = MarcT16File(m, 'data/marc/e7x1b.t16', verbose=1)
-#     mf.readInc(2)
+#     mf = MarcT16File(m, '../data/marc/e7x1b.t16', verbose=1)
+#     mf.readInc(1)
 
 #     point = m.getCoordinate(m.getCoordNames()[2])+N.array([-0.13,0.021])
 #     print m.getNodVar(point,['d_x','d_y'])
@@ -772,15 +780,21 @@ if __name__ == "__main__":
 #     m.makeModelCache()
 # #    profile.run('TestFindModelBoundary()')
 
-    import feval.fecodes.gmv.GMVFile as gmv
-    datapath = '/home/tinu/fismo/trunk/visco3d/model-runs'
-    filename = 'with-tongue,n=1,etab=500,etaff=0.1.gmv'
-    m = FEModel()
-    m.verbose=0
-    m.accuracy = 1.e-20
-    mf = gmv.GMVFile(m)
-    mf.readFile(datapath+'/'+filename)
-    m.removeUnusedNodes()
+#     import feval.fecodes.gmv.GMVFile as gmv
+#     datapath = '/home/tinu/fismo/trunk/visco3d/model-runs'
+#     filename = 'with-tongue,n=1,etab=500,etaff=0.1.gmv'
+#     m = FEModel()
+#     m.verbose=0
+#     m.accuracy = 1.e-20
+#     mf = gmv.GMVFile(m)
+#     mf.readFile(datapath+'/'+filename)
+#     m.removeUnusedNodes()
     
-    point = N.array([0,0,0])
-    print m.findElement(point).name
+#     for n, c in m.Coord.items():
+#         m.setNodVar(n, c)
+#     m.setNodVarInfo(['X', 'Y', 'Z'])
+    
+#     point = N.array([5000,100,0])
+#     print m.findElement(point).name
+#     print m.getNodVar(point, m.NodVarInfo, deriv=True)
+
