@@ -111,7 +111,7 @@ class Element:
         if deriv:
             sh = self.shape.calcShapeDeriv(self.lcoord) # the shape function derivatives
             inverse_jacobi = LA.inv(N.dot(self.nodcoord.transpose(), sh.transpose()))
-            return N.dot(nodalvar, sh.transpose())*inverse_jacobi
+            return N.dot(N.dot(nodalvar, sh.transpose()),inverse_jacobi)
         else:
             sh = self.shape.calcShape(self.lcoord) # the shape functions
             return N.dot(nodalvar, sh.transpose())
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     sh = ShapeFunctions.shapeFunctions['Quad4']()
     nodes = [1, 2, 3, 4]
     #nodcoord = N.array(([0,0], [2,0], [3,2], [0,2]),dtype=N.float_)
-    nodcoord = N.array(([0.,0.], [1.,0.], [1,2], [0,2.]),dtype=N.float_)
+    nodcoord = N.array(([0.2,0.], [10.,0.], [1,2], [0,3.]),dtype=N.float_)
     e = Element( nodes, sh, nodcoord, 1 )
 
     print e.findLocalCoord([1., 1.])
@@ -179,8 +179,9 @@ if __name__ == '__main__':
     print e.findLocalCoord(e.findGlobalCoord([0., -1.]))
     print e.containsPoint([0., 2.], accuracy=0.01)
 
-    print e.findGlobalCoord([-2., 0.])
+    print e.findGlobalCoord([-0., 0.])
 
     nodvar = e.nodcoord.transpose()
     
+    print '---------'
     print e.mapNodalVar(nodvar,deriv=True)
