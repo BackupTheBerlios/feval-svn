@@ -110,7 +110,7 @@ class ShapeFunction_Tri3(ShapeFunctionPrototype):
                    [0,1],
                    ])
     triangles   = N.array([[0,1,2]])
-    #!!!! worng
+    #!!!! worng, this is still from quads
     gaussDist = 0.577350269189626  # 1./N.sqrt(3)
     lcoordGauss = N.array([ [-1., -1.],
                             [ 1., -1.],
@@ -120,12 +120,11 @@ class ShapeFunction_Tri3(ShapeFunctionPrototype):
     def calcShape(self, lcoord):
         x, y = lcoord
         xy = x*y
-        self.f[0] = 1.0-x-y+xy
-        self.f[1] = 1.0+x-y-xy
-        self.f[2] = 1.0+x+y+xy
-        self.f[3] = 1.0-x+y-xy
-        self.f = self.f*0.25
-        return self.f
+        return 0.25*N.array([
+            1.0-x-y+xy, 
+            1.0+x-y-xy,
+            1.0+x+y+xy,
+            1.0-x+y-xy])
 
     def calcShapeDeriv(self, lcoord):
         x, y = lcoord
@@ -263,44 +262,46 @@ class ShapeFunction_Quad8(ShapeFunctionPrototype):
         xx, yy, xy = x*x, y*y, x*y
         xxy, xyy = xx*y, x*yy
 
+        return 0.25*N.array([
         # the corner nodes
-        self.f[0] = 0.25*(-1.0+xy+xx+yy-xxy-xyy)
-        self.f[1] = 0.25*(-1.0-xy+xx+yy-xxy+xyy)
-        self.f[2] = 0.25*(-1.0+xy+xx+yy+xxy+xyy)
-        self.f[3] = 0.25*(-1.0-xy+xx+yy+xxy-xyy)
+            (-1.0+xy+xx+yy-xxy-xyy),
+            (-1.0-xy+xx+yy-xxy+xyy),
+            (-1.0+xy+xx+yy+xxy+xyy),
+            (-1.0-xy+xx+yy+xxy-xyy),
         # the mid-side nodes
-        self.f[4] = 0.5*(1.0-y-xx+xxy)
-        self.f[5] = 0.5*(1.0+x-yy-xyy)
-        self.f[6] = 0.5*(1.0+y-xx-xxy)
-        self.f[7] = 0.5*(1.0-x-yy+xyy)
-        return self.f
+            2.*(1.0-y-xx+xxy),
+            2*(1.0+x-yy-xyy),
+            2*(1.0+y-xx-xxy),
+            2*(1.0-x-yy+xyy)])
 		
     def calcShapeDeriv(self, lcoord):
         x, y = lcoord
         xx, yy, xy = x*x, y*y, x*y
         xxy, xyy, xy2 = xx*y, x*yy, xy*xy
         
+        return 0.25*N.array([
+            [
         # the corner nodes
-        self.df[0,0] = y+xx-xy2-yy
-        self.df[0,1] =-y+xx-xy2+yy
-        self.df[0,2] = y+xx+xy2+yy
-        self.df[0,3] =-y+xx+xy2-yy
-        self.df[1,0] = x+yy-xx-xy2
-        self.df[1,1] =-x+yy-xx+xy2
-        self.df[1,2] = x+yy+xx+xy2
-        self.df[1,3] =-x+yy+xx-xy2
-        self.df[:,0:4] = self.df[:,0:4]*0.25
-        
+            y+xx-xy2-yy,
+            y+xx-xy2+yy,
+            y+xx+xy2+yy,
+            y+xx+xy2-yy,
         # the mid-side nodes
-        self.df[0,4] = -x+xy
-        self.df[0,5] = (1.0-yy)*0.5
-        self.df[0,6] = -x-xy
-        self.df[0,7] = (-1.0+yy)*0.5
-        self.df[1,4] = (-1.0+xx)*0.5
-        self.df[1,5] = -y-xy
-        self.df[1,6] = (1.0-xx)*0.5
-        self.df[1,7] = -y+xy
-        return self.df
+            (-x+xy)*4.,
+            (1.0-yy)*2.,
+            (-x-xy)*4.,
+            (-1.0+yy)*2.,
+            ],[
+        # the corner nodes
+            x+yy-xx-xy2,
+            x+yy-xx+xy2,
+            x+yy+xx+xy2,
+            x+yy+xx-xy2,
+        # the mid-side nodes
+            (-1.0+xx)*2.,
+            (-y-xy)*4.,
+            (1.0-xx)*2.,
+            (-y+xy)*4.]])
 	
     def nextPattern(self, lcoord):
         x,y = lcoord / max(N.absolute(lcoord)) * 1.01
@@ -391,16 +392,15 @@ class ShapeFunction_Hex8(ShapeFunctionPrototype):
         xy, xz, yz = x*y, x*z, y*z
         xyz = x*y*z
         
-        self.f[0] = 1.0-x-y-z+xy+xz+yz-xyz	 # -1,-1,-1
-        self.f[1] = 1.0+x-y-z-xy-xz+yz+xyz	 #  1,-1,-1
-        self.f[2] = 1.0+x+y-z+xy-xz-yz-xyz	 #  1, 1,-1
-        self.f[3] = 1.0-x+y-z-xy+xz-yz+xyz	 # -1, 1,-1
-        self.f[4] = 1.0-x-y+z+xy-xz-yz+xyz	 # -1,-1, 1
-        self.f[5] = 1.0+x-y+z-xy+xz-yz-xyz	 #  1,-1, 1
-        self.f[6] = 1.0+x+y+z+xy+xz+yz+xyz	 #  1, 1, 1
-        self.f[7] = 1.0-x+y+z-xy-xz+yz-xyz	 # -1, 1, 1
-        self.f = self.f/8.0
-        return self.f
+        return 0.125*N.array([
+            1.0-x-y-z+xy+xz+yz-xyz,      # -1,-1,-1,
+            1.0+x-y-z-xy-xz+yz+xyz,      #  1,-1,-1,
+            1.0+x+y-z+xy-xz-yz-xyz,      #  1, 1,-1,
+            1.0-x+y-z-xy+xz-yz+xyz,      # -1, 1,-1,
+            1.0-x-y+z+xy-xz-yz+xyz,      # -1,-1, 1,
+            1.0+x-y+z-xy+xz-yz-xyz,      #  1,-1, 1,
+            1.0+x+y+z+xy+xz+yz+xyz,      #  1, 1, 1,
+            1.0-x+y+z-xy-xz+yz-xyz])      # -1, 1, 1,
 
     def calcShapeDeriv(self, lcoord):
         x, y, z = lcoord
