@@ -140,11 +140,12 @@ class ModelData:
         """
         self.NodVar[id] = nodvar
 
-    def getNodVar(self, id):
-        """Get the nodal variables
-        id is the node id
-        """
-        return self.NodVar[id]
+        ## this is not needed, I guess
+        #     def getNodVar(self, id):
+        #         """Get the nodal variables
+        #         id is the node id
+        #         """
+        #         return self.NodVar[id]
 
     def getNodVarsAsArray(self):
         """Collect all nodal variables in an array.
