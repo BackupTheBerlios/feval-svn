@@ -216,10 +216,11 @@ class FEModel(ModelData):
         for n in nodelist:
             ee = self.nodeIndex[n]
             for e in ee:
-                if elems.has_key(e):
-                    elems[e].append(n)
-                else:
-                    elems[e] = [n]
+                e.setdefault(e, []).append(n)
+                #                 if elems.has_key(e):
+                #                     elems[e].append(n)
+                #                 else:
+                #                     elems[e] = [n]
 
         elemsides = []
         for e, nodes  in elems.items():
@@ -504,7 +505,7 @@ class FEModel(ModelData):
         # i.e. that are not part of an element connectivity
         removenodes = []
         for n in self.Coord:
-            if not self.nodeIndex.has_key(n):
+            if not n in self.nodeIndex:
                 removenodes.append(n)
         for n in removenodes:
             del self.Coord[n]
@@ -634,13 +635,13 @@ if __name__ == "__main__":
     mf.readInc(1)
 
     for n, c in m.Coord.items():
-        m.setNodVar(n, c[:2])
+        m.setNodVar(n, [c[0]*0.5, c[1]*2.])
     m.setNodVarInfo(['X','Y'])
     
     point = N.array([7,10,0])
     print m.findElement(point).name
     print m.getNodVar(point, m.NodVarInfo)
-    print m.getNodVar(point+N.array([0.1,0.1,0]), m.NodVarInfo)
+    x =  m.getNodVar(point+N.array([1.0,0.1,0]), m.NodVarInfo, deriv=True)
     print m.getNodVar(point, m.NodVarInfo, deriv=True)
 
 #     print m.getAdjacentNodes(2)
