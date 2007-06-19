@@ -349,7 +349,7 @@ class FEModel(ModelData):
         resNodvars, resIntPointVars = self.getVariables(element, intpointvars=postvars, deriv=deriv)
         return resIntPointVars
 
-    def getAdjacentNodes(self, node):
+    def getAdjacentNodes(self, node, onboundary=False):
         """Get the nodes that are connected to |node| on an edge.
         If |node| is not a element corner node return None
         (this should happen only for higher order elements).
@@ -361,6 +361,8 @@ class FEModel(ModelData):
                 return None
             for nn in e.shape.nextnodes[e.nodes.index(node)]:
                 nextnodes.add(e.nodes[nn])
+        if onboundary:
+            nextnodes = set(self.findBoundaryNodes().keys()).intersection(nextnodes)
         return list(nextnodes)
 
     def findBoundaryNodes(self, recalc=False):
