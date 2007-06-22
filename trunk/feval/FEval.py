@@ -158,7 +158,7 @@ class FEModel(ModelData):
         """Find the name of the node closest to |coord|.
         the key of the node-dictionary is returned
         """
-        allcoord = N.array(self.Coord.values())
+        allcoord = self.getAllCoordinatesAsArray()
         idx = N.sum((allcoord - coord)**2, axis=1).argmin()
         return self.Coord.keys()[idx]
 
@@ -278,15 +278,17 @@ class FEModel(ModelData):
         sh = ShapeFunctions.shapeFunctions[conn[0]]()
 
         # collect the nodal coordinates
-        nodcoord = []
-        for n in nodes:
-            nodcoord.append( self.Coord[n] )
-        nodcoord = N.array(nodcoord)
+        nodcoord = N.array([self.Coord[n] for n in nodes])
 
         # invoke an instance of the element
         e = Element.Element( nodes, sh, nodcoord, elename )
         self.elementCache[elename] = e
         return e
+
+    def getAllCoordinatesAsArray(self):
+        """Collect all coordinates and return them as numpy array
+        """
+        return N.array(self.Coord.values())
 
     def getVariables(self, element, nodvars=None, intpointvars=None, deriv=False):
         """Get a variable from the model for the |element| given
@@ -359,7 +361,7 @@ class FEModel(ModelData):
             e = self.getElement(elem)
             if not node in N.array(e.nodes)[e.shape.cornernodes]:
                 return None
-            for nn in e.shape.nextnodes[e.nodes.index(node)]:
+            for nn in e.shape.nextnodes[list(e.nodes).index(node)]:
                 nextnodes.add(e.nodes[nn])
         if onboundary:
             nextnodes = set(self.findBoundaryNodes().keys()).intersection(nextnodes)
@@ -429,21 +431,47 @@ class FEModel(ModelData):
             self.boundaryElems = belems
         return self.boundaryElems
 
-    def findModelBoundary(self, point, dir, accuracy=0.0001):
+    def findModelBoundary(self, point, direction, savebmodel=True, culling=True):
         """Find the boundary of the model in |direction|, starting at the
         given |point|.  Return None if no boundary is found.
         |direction| and point| should be arrays, lists or tuples of the same
         |dimension as the model.  """
 
-        point, dir = N.asarray(point, dtype=N.float_), N.asarray(dir, dtype=N.float_)
+        #direction = direction / N.sqrt(N.dot(direction,direction))
+
+        try:
+            bmodel = self.bmodel_tri
+        except:
+            bmodel = self.extractBoundaryModel(triangles=True)
+            if savebmodel:
+                self.bmodel_tri = bmodel
+        
+        import intersect_triangle
+        for ele in bmodel.getElementNames():
+            e = bmodel.getElement(ele)
+            res = intersect_triangle.intersect_triangle(point, direction, e.nodcoord)
+            if res != None:
+                # res also contains distance and local variables
+                return res[-1]
+        return None
+            
+                
+        
+
+    def findModelBoundaryOld(self, point, direction, accuracy=0.0001):
+        """Find the boundary of the model in |direction|, starting at the
+        given |point|.  Return None if no boundary is found.
+        |direction| and point| should be arrays, lists or tuples of the same
+        |dimension as the model.  """
+
+        point, direction = N.asarray(point, dtype=N.float_), N.asarray(direction, dtype=N.float_)
+
+        direction = direction / N.sqrt(N.dot(direction,direction))
         
         # set the accuracy to the given value
         elem_tol, elem_btol = self.elem_tol, self.elem_btol
         self.elem_tol, self.elem_btol = accuracy, accuracy
         
-        # make a unit vector
-        dir = dir/N.sqrt(N.inner(dir,dir))
-
         e = self.findElement(point)
         # if we start outside the model: return find the next Element inside
         # the model
@@ -465,7 +493,7 @@ class FEModel(ModelData):
                 # dcoord is the half-size of the element in global coordinates
                 # i.e. 0.5*(dx, dy, ..)
                 dcoord = N.sum(N.dot( e.shape.calcShapeDeriv(N.zeros(e.dim)), e.nodcoord))
-                pt = point + acc*dir*abs(dcoord)
+                pt = point + acc*direction*abs(dcoord)
                 if self.verbose:
                     print 'element: ', e.name , ';  point  : ', pt
                 ee = self.findElement(pt)
@@ -477,7 +505,7 @@ class FEModel(ModelData):
 
             # now we should be in some boundary element (probably not yet the correct..)
             lcoord = e.lcoord
-            pt = point + acc*dir*abs(dcoord)
+            pt = point + acc*direction*abs(dcoord)
             lc = e.findLocalCoord(pt)
             if isInRange(lc, 1.):
                 e.lcoord = lc
@@ -573,16 +601,16 @@ class FEModel(ModelData):
         for node, coord in self.Coord.items():
             self.Coord[node] = self.Coord[node]*factor
 
-    def extractBoundaryModel(self, triangles=False, faces=range(6)):
+    def extractBoundaryModel(self, triangles=False, faces=None):
         """extract a model that only contains the boundary nodes and sides
+        if |faces| is given, only extract the elements with the given faces
         """
         bmodel = FEModel()
         belems = self.findBoundaryElements()
 
-        print 'creating boundary mesh'
-
         for elename, sides in belems.items():
             e = self.getElement(elename)
+            faces = faces or range(e.shape.nsides)
             for s in sides:
                 if s in faces:
                     nodes = N.asarray(e.nodes)
@@ -597,9 +625,8 @@ class FEModel(ModelData):
                     for c in nodes[shape.sidenodes[s]]:
                         bmodel.setCoordinate(c, self.getCoordinate(c))
         bmodel.renumberElements()
+        bmodel.update()
         return bmodel
-        
-
 
 def TestFind():
     """Test function, mainly for profiling purposes"""
@@ -632,19 +659,19 @@ if __name__ == "__main__":
 
 #     print 'loading the model'
 #     ## 2D-model test case
-    m = FEModel(verbose=1)
-    mf = MarcPostFile(m, '../data/marc/e7x1b.t16')
-    mf.readInc(1)
+#     m = FEModel(verbose=1)
+#     mf = MarcPostFile(m, '../data/marc/e7x1b.t16')
+#     mf.readInc(1)
 
-    for n, c in m.Coord.items():
-        m.setNodVar(n, [c[0]*0.5, c[1]*2.])
-    m.setNodVarInfo(['X','Y'])
+#     for n, c in m.Coord.items():
+#         m.setNodVar(n, [c[0]*0.5, c[1]*2.])
+#     m.setNodVarInfo(['X','Y'])
     
-    point = N.array([7,10,0])
-    print m.findElement(point).name
-    print m.getNodVar(point, m.NodVarInfo)
-    x =  m.getNodVar(point+N.array([1.0,0.1,0]), m.NodVarInfo, deriv=True)
-    print m.getNodVar(point, m.NodVarInfo, deriv=True)
+#     point = N.array([7,10,0])
+#     print m.findElement(point).name
+#     print m.getNodVar(point, m.NodVarInfo)
+#     x =  m.getNodVar(point+N.array([1.0,0.1,0]), m.NodVarInfo, deriv=True)
+#     print m.getNodVar(point, m.NodVarInfo, deriv=True)
 
 #     print m.getAdjacentNodes(2)
 #     #a = m.findBoundaryElements()
@@ -682,22 +709,35 @@ if __name__ == "__main__":
 
 #     stop
 
-    ## 3D-model
-#     try:
-#         mf
-#     except:
-#         m = FEModel()
-#         m.verbose=1
-#         m.accuracy = 1.e-20
-#         ##mf = MarcT16File(m, '/home/tinu/numeric/feval/test/mm_22_51_22_3d_mid_g0.0-n1-a5.3.t16')
-#         mf = MarcT16File(m, '/home/tinu/projects/jako/marc/jako3db_polythermal.t16')
-#         mf.readInc(1)
-#     point = m.getCoordinate(m.getCoordinateNames()[1500])+N.array([-0.5,0.05,0.02])
+    # 3D-model
+    try:
+        m
+    except:
+        m  = FEModel()
+        mf = MarcPostFile(m, '/home/tinu/projects/colle/marc/cgx8_dc0.80/cgx8dec.t16')
+        mf.readInc(1)
 
-#     print 'nodvar ', m.getNodVar(point,['d_x','d_y'])
-#     print 'point accuracy: ', m.getIntPointVar(point,['x','y','z'])-point
-#     print m.getIntPointVar(point,['sigma_6'])
-#     print m.findModelBoundary(point, N.array([0,-5,-6]), accuracy=0.01)
+    point = m.getCoordinate(1001)+N.array([-10,10,-50])
+    direction = N.array([0,0,1])
+    print m.findModelBoundaryOld(point, direction, accuracy=0.001)
+    print 'no culling'
+    print m.findModelBoundary(point, direction, culling=False)
+    print 'culling'
+    print m.findModelBoundary(point, direction, culling=True)
+
+    m.bmodel_tri.renumberNodes(1)
+    m.bmodel_tri.renumberElements(1)
+    m.bmodel_tri.update()
+
+    gf = gmv.GMVFile(m.bmodel_tri)
+    gf.setWrite('gmvinput')
+    gf.setWrite('nodes')
+    gf.setWrite('cells')
+    gf.setWrite('endgmv')
+    gf.writeFile('A.gmv')
+
+
+
 
 ### profiling
 
