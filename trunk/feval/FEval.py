@@ -359,10 +359,10 @@ class FEModel(ModelData):
         nextnodes = set()
         for elem in self.nodeIndex[node]:
             e = self.getElement(elem)
-            if not node in N.array(e.nodes)[e.shape.cornernodes]:
+            enodes = N.asarray(e.nodes)
+            if not node in enodes[e.shape.cornernodes]:
                 return None
-            for nn in e.shape.nextnodes[list(e.nodes).index(node)]:
-                nextnodes.add(e.nodes[nn])
+            nextnodes.update(enodes[e.shape.nextnodes[enodes == node]][0].tolist())
         if onboundary:
             nextnodes = set(self.findBoundaryNodes().keys()).intersection(nextnodes)
         return list(nextnodes)
