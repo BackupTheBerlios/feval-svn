@@ -43,14 +43,16 @@ class ModelData:
         self.Sets = {}
         self.initNodVar()
         self.initIntpVar()
+        self.dirty = {'Coord': True, 'Conn': True, 'Var': False}
 
     def __repr__(self):
         """print a nice model summary"""
-        return "%s \n %6d Elements\n %6d Nodes\n %6d Nodal values"  \
+        statusFlag = {True: '*', False: ''}
+        return "%s \n %6d Elements %s\n %6d Nodes %s\n %6d Nodal values %s"  \
                % (self.name,
-                  len(self.getElementNames()),
-                  len(self.getNodeNames()),
-                  len(self.NodVarInfo)
+                  len(self.getElementNames()), statusFlag[self.dirty['Conn']],
+                  len(self.getNodeNames()), statusFlag[self.dirty['Coord']],
+                  len(self.NodVarInfo), statusFlag[self.dirty['Var']],
                   )
 
     def update(self):
@@ -74,6 +76,7 @@ class ModelData:
     def setConn(self, id, elemtype, conn):
         """deprecated, use setElement instead"""
         self.setElement(id, elemtype, conn)
+        self.dirty['Conn'] = True
 
     def setElement(self, id, elemtype, conn):
         """set element with identifier |id|, type |elemtype|
@@ -81,10 +84,12 @@ class ModelData:
         # setting the connectivity as numpy array may change the type
         # this is a problem for integer and string names
         self.Conn[id] = (elemtype, conn)
+        self.dirty['Conn'] = True
 
     def removeElement(self, id):
         """remove the element with name |id|"""
         del self.Conn[id]
+        self.dirty['Conn'] = True
 
     def getElementNames(self):
         return self.Conn.keys()
@@ -95,13 +100,16 @@ class ModelData:
     def setCoord(self, id, coord):
         """deprecated, use setCoordinate instead"""
         self.setCoordinate(id, coord)
+        self.dirty['Coord'] = True
 
     def setCoordinate(self, id, coord):
         self.Coord[id] = N.asarray(coord, dtype=N.float_)
+        self.dirty['Coord'] = True
 
     def removeCoordinate(self, id):
         """remove the element with name |id|"""
         del self.Coord[id]
+        self.dirty['Coord'] = True
 
     def getCoordinateNames(self):
         return self.Coord.keys()
@@ -127,20 +135,23 @@ class ModelData:
 
     def setIntPointVar(self, id, intpointvar):
         self.IntPointVar[id] = intpointvar
+        self.dirty['Var'] = True
 
     def setIntPointVarInfo(self, intpointvarinfo):
         """Wrapper to set the integration point variable information
         This is accessed from the file reader class (eg. MarcT16File)
         """
         self.IntPointVarInfo = intpointvarinfo
+        self.dirty['Var'] = True
 
     def setNodVar(self, id, nodvar):
         """Set the nodal variables
         id is the node id
         """
         self.NodVar[id] = nodvar
+        self.dirty['Var'] = True
 
-        ## this is not needed, I guess
+        ## this is not needed, I guessk
         #     def getNodVar(self, id):
         #         """Get the nodal variables
         #         id is the node id
@@ -164,6 +175,7 @@ class ModelData:
         This is accessed from the file reader class (eg. MarcT16File)
         """
         self.NodVarInfo = nodvarinfo
+        self.dirty['Var'] = True
 
     def setSet(self, type, name, set):
         """A dictionary of set-types, each containing a
@@ -220,6 +232,8 @@ class ModelData:
                 newNodVar[trans[n]] = self.NodVar[n]
             self.NodVar = newNodVar
         self.makeModelCache()
+        self.dirty['Coord'] = True
+        
 
     def renumberElements(self, base=1):
         """renumber all elements starting with |base|
@@ -240,6 +254,7 @@ class ModelData:
                     newelem.append(trans[n])
                 self.Sets['elem'][key] = newelem
         self.makeModelCache()
+        self.dirty['Conn'] = True
 
 
 if __name__ == '__main__':
@@ -253,7 +268,10 @@ if __name__ == '__main__':
     #mf.readInc(2)
 
     vars = m.getNodVarsAsArray()
-
+    m.update()
+    print m
+    
     m.renumberElements(base=0)
     m.renumberNodes(base=0)
     
+    print m
