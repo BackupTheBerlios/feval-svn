@@ -1,15 +1,12 @@
 import re
-import Numeric; N = Numeric
-from feval.FEval import *
-
-## note that this file is not based on FETextFile, but is a direct
-## reader/writer which seems much simpler
+import numpy as N
 
 class LibmeshFile(object):
     """Parse and write a XDR file
     This is XDA file type defined in libmesh
+    Based on the documentation in /doc/latex/xda_format/xda_format.pdf
     """
-    type = 'xdr'
+    type = 'xdr/xda'
 
     # Dictionary of the Element types (from enum_elem_type.h)
     shapeFunctionDict = {
@@ -29,50 +26,125 @@ class LibmeshFile(object):
         invShapeFunctionDict[v] = k
 
     def __init__(self, model):
-        self.model = model
-        self.elemNumber = 0
-        self.nodeNumber = 0
+        self.model       = model
         self.versionInfo = [0, 0]
-        self.fileType    = ''
-        # Pairs of characters used to mark comments
-        self.Comment = [( '#', '\n' )]
+        self.fileType    = 'xda'
+        self.bcond       = []
 
     def readFile(self, filename):
-        """Parse an input file
+        """read either an ASCII or binary file 
         """
-        infile = file(filename)
-        lines = infile.readlines()
+        if filename.endswith('.xda'):
+            self.readFileASCII(filename)
+        elif filename.endswith('.xdr'):
+            self.readFileBinary(filename)
+        else:
+            print "don't know what to do"
+
+    def readFileBinary(self, filename):
+        """read the binary file
+        """
+        bytes = file(filename,'rb').read()
+
+        filetype, level = bytes[4:8], bytes[9]
+        if not filetype == 'LIBM':
+            print 'file type not (yet) supported', filetype
+            stop
+
+        nelems, nnodes, sumweight, nbcond, x, neleblocks = N.fromstring(bytes[12:36], '>i')
+        eletypes = N.fromstring(bytes[36:36+4*neleblocks], '>i')
+        elenums  = N.fromstring(bytes[36+4*neleblocks:36+8*neleblocks], '>i')
+
+        ptr = 36+8*neleblocks +32
+
+        # read the element block
+        conn = N.fromstring(bytes[ptr:ptr+4*sumweight], '>i')
+        ptr += 4*sumweight
+        import feval.ShapeFunctions
+        cnt = 0
+        for elem, nelem in zip(eletypes, elenums):
+            if not self.shapeFunctionDict.has_key(str(elem)):
+                print 'No shape function found for element type', elem
+            elemtype = self.shapeFunctionDict[str(elem)]
+            shape = feval.ShapeFunctions.shapeFunctions[elemtype]
+            blocklen = nelem*(shape.nnodes+2)
+            print blocklen, nelem
+            for nodes in conn[cnt:cnt+blocklen].reshape(nelem, blocklen//nelem):
+                self.model.setElement(nodes[-2], elemtype, nodes[:-2] )
+
+            cnt += blocklen
+
+        # read the node block
+        coord = N.fromstring(bytes[ptr:ptr+8*3*nnodes], '>d')
+        coord.shape = ( len(coord)//3, 3)
+        for n, c in enumerate(coord):
+            self.model.setCoordinate(n, c)
+        ptr += 8*3*nnodes
+
+        # read the boundary conditions
+        if nbcond > 0:
+            bcond = N.fromstring(bytes[ptr:ptr+4*3*nbcond], '>i')
+            bcond.shape = (nbcond, 3)
+            self.bcond = bcond
+
+    def readFileASCII(self, filename):
+        """Parse an ASCII input file
+        """
+
+        lines = file(filename).readlines()
         
-        # first read the header
+        # read the header
         self.fileType, self.versionInfo = lines[0].split()
         nelem      = int(lines[1].split()[0])      # number of elements
         nnodes     = int(lines[2].split()[0])      # number of nodes
+        nbcond     = int(lines[4].split()[0])      # number of boundary conditions
         elemblocks = int(lines[6].split()[0])      # Num. Element Blocks.
         elemtypes  = lines[7].split()[:elemblocks] # Element types in each block.
-        nlevels = len(lines[8].split('#')[0].split())/elemblocks
+        nlevels    = len(lines[8].split('#')[0].split())/elemblocks
         neleblock  = map( int, lines[8].split()[:elemblocks]) # Num. of elements in each block.
         if not lines[10].startswith('Title String'):
             self.model.name = lines[10][:-1].strip()
 
-        # and now we get the data
-        # first comes the element data
-        ll = 10
-        for elem, nelem in zip(elemtypes, neleblock):
-            if not self.shapeFunctionDict.has_key(elem):
-                print 'No shape function found for element type', elem
-            elemtype = self.shapeFunctionDict[elem]
-            for l in range(nelem):
-                ll += 1
-                self.elemNumber += 1
-                nodes = map(int, lines[ll].split())
-                self.model.setElement(self.elemNumber, elemtype, nodes )
+        if self.fileType == 'LIBM':
+            # the element data, connectivity followed by element id and parent id
+            cnt = 10
+            for elem, nelem in zip(elemtypes, neleblock):
+                if not self.shapeFunctionDict.has_key(elem):
+                    print 'No shape function found for element type', elem
+                elemtype = self.shapeFunctionDict[elem]
+                for l in range(nelem):
+                    cnt += 1
+                    nodes = map(int, lines[cnt].split())
+                    self.model.setElement(nodes[-2], elemtype, nodes[:-2] )
+        else: # fileType = 'DEAL' or 'MGF'
+            # the element data, connectivity 
+            cnt = 10
+            elenum = 0
+            for elem, nelem in zip(elemtypes, neleblock):
+                if not self.shapeFunctionDict.has_key(elem):
+                    print 'No shape function found for element type', elem
+                elemtype = self.shapeFunctionDict[elem]
+                for l in range(nelem):
+                    cnt += 1
+                    nodes = map(int, lines[cnt].split())
+                    self.model.setElement(elenum, elemtype, nodes )
+                    elenum +=1
 
         # then the node data (coordinates)
+        nodeNumber = 0
         for node in range(nnodes):
-            ll += 1
-            self.nodeNumber += 1
-            coord = map( float, lines[ll].split() )
-            self.model.setCoordinate( self.nodeNumber, coord )
+            cnt += 1
+            coord = map( float, lines[cnt].split() )
+            self.model.setCoordinate( nodeNumber, coord )
+            nodeNumber += 1
+
+        # read the boundary conditions
+        if nbcond > 0:
+            cnt += 2
+            bcond = []
+            for n in range(nbcond):
+                bcond.append(map(int, lines[cnt+n].split()))
+            self.bcond = N.array(bcond)
 
     def writeFile(self, filename, bcond = None):
         """Write a Libmesh xda file
@@ -90,27 +162,30 @@ class LibmeshFile(object):
         for ele in self.model.getElementNames():
             etype, conn = self.model.getElementConn(ele)
             nnod = len(conn)
-            elines.setdefault(etype, []).append('%d '*nnod % tuple(conn) + '\n')
+            elines.setdefault(etype, []).append('%d '*nnod % tuple(conn) + '%d -1\n' % ele)
             weight += nnod
-
+        weight += 2*len(self.model.Conn)
+        
         # now we are ready to write the file
+
+        # no refinement level: LIBM 0
         lines.append('LIBM 0\n')
         lines.append('%d\t # Num. Elements\n' % len(self.model.Conn) )
         lines.append('%d\t # Num. Nodes\n'    % len(self.model.Coord) )
-        lines.append('%d\t # Sum of Element Weights\n' % weight)
+        lines.append('%d\t # Sum of Element Weights\n' % weight )
+        n_bound = 0
         if bcond:
             n_bound = len( bcond )
-        else:
-            n_bound = 0
         lines.append('%d\t # Num. Boundary Conds.\n' % n_bound)
         lines.append('65536\t # String Size (ignore)\n') 
         lines.append('%d\t # Num. Element Blocks.\n' % len(elines.keys()) )
         etypes, eblocks = '', ''
-        for t in elines.keys():
+        ekeys = sorted(elines.keys())
+        for t in ekeys:
             etypes  += '%s ' % self.invShapeFunctionDict[t]
             eblocks += '%s ' % len(elines[t])
         lines.append('%s\t # Element types in each block.\n' % etypes)
-        lines.append('%s\t # Num. of elements in each block.\n' % eblocks)
+        lines.append('%s\t # Num. of elements in each block at each level.\n' % eblocks)
         lines.append('Id String\n')
         title = 'Title String'
         if not self.model.name.startswith('FE-Model'):
@@ -118,7 +193,7 @@ class LibmeshFile(object):
         lines.append(title+'\n')
 
         # add the element lines
-        for t in elines.keys():
+        for t in ekeys:
             lines.extend(elines[t])
         del elines
 
@@ -129,6 +204,7 @@ class LibmeshFile(object):
             lines.append('%f '*ndir % tuple(self.model.getCoordinate(id)) + '\n')
 
         if bcond:
+            lines.append('\n')
             for bc in bcond:
                 lines.append('%d %d %d\n' % tuple(bc))
 
@@ -138,40 +214,25 @@ class LibmeshFile(object):
 ### Test
 if __name__ == '__main__':
 
-    m = FEModel()
+    import feval.FEval 
+
+    m = feval.FEval.FEModel()
     mf = LibmeshFile(m)
-    mf.readFile('/soft/numeric/libmesh/examples/ex10/mesh.xda')
-    bc = [[1,5, 0],
-          [2,6, 1000]]
-    mf.writeFile('/soft/numeric/libmesh/examples/ex3/a2.xda', bcond = bc)
-    
-#     infilename  = os.path.join( feval.__path__[0], 'data', 'xdr', 'mesh.xda' )
-#     outfilename = os.path.join( feval.__path__[0], 'data', 'xdr', 'ca_out.xda' )
+    #mf.readFile('/soft/numeric/libmesh/examples/ex10/mesh.xda')
+    #mf.readFile("/soft/numeric/libmesh/reference_elements/3D/one_hex20.xda");
+    #     bc = [[0,1, 77],
+    #           [3,2, 1000]]
 
-#     from feval.fecodes.marc.MarcT16File import *  
-    # inputfilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal_S10_E5.t16')
-#     inputfilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal_S10_E5.t16')
-#     mf = MarcT16File(m, inputfilename)
-#     mf.readInc(3)
+    #     mf.writeFile('/home/tinu/projects/libmesh/ex2/a2.xda', bcond = bc)
 
-#    mf = MarcT16File(m, '/home/tinu/projects/colle/marc/cgx8_dc0.90/cgx8dec.t16')
+    mf.readFile('/home/tinu/projects/libmesh/ex2/a2.xda')
+
+    m2 = feval.FEval.FEModel()
+    mf2 = LibmeshFile(m2)
+    mf2.readFile('/home/tinu/projects/libmesh/ex2/a2.xdr')
 
 
-#     from feval.fecodes.marc.MarcFile import *  
-#     mf = MarcFile(m)
-#     mf.readFile('../../../data/marc/test1.dat')
-# #    mf.readFile('/home/tinu/projects/jako/marc/jako3d_isothermal.dat')
 
-#     m.renumberNodes(base=0)
-#     m.renumberElements(base=0)
-#     bednodes = m.Sets['node']['bed']
-#     elemsides = m.findElementsFromNodes(bednodes)
-#     gf = XDRFile(m)
-
-#     gf.setBoundaryElems(elemsides)
-#     gf.setWrite('deal')
-#     gf.setWrite('boundary')
-#     gf.writeFile('jako.xdr')
 
 
 
