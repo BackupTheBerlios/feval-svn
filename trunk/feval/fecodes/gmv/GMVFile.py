@@ -115,8 +115,6 @@ class GMVFile(FETextFile):
             lines.append(setname[:8]+'\n')
         setlines = ['%d\n' % (len(setnames))] * len(self.model.Conn)
         for j, setname in enumerate(setnames[:-1]):
-            print setname, j+1
-            print len(self.model.getSet('elem', setname))
             for ele in self.model.getSet('elem', setname):
                 setlines[ele-1] = '%d\n' %(j+1)
         lines.extend(setlines)
