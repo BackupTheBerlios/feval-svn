@@ -103,6 +103,25 @@ class GMVFile(FETextFile):
                 lines.append('%f \n' % self.model.Coord[id][d])
         return lines
 
+    def compose_material(self):
+        """"""
+        lines = []
+        if not 'elem' in self.model.getSetTypes():
+            return lines
+        setnames = sorted(self.model.getSetNames('elem'))
+        setnames.append('None')
+        lines.append('material %i 0 \n' % (len(setnames)))
+        for setname in setnames:
+            lines.append(setname[:8]+'\n')
+        setlines = ['%d\n' % (len(setnames))] * len(self.model.Conn)
+        for j, setname in enumerate(setnames[:-1]):
+            print setname, j+1
+            print len(self.model.getSet('elem', setname))
+            for ele in self.model.getSet('elem', setname):
+                setlines[ele-1] = '%d\n' %(j+1)
+        lines.extend(setlines)
+        return lines
+
     def extract_element(self, linelist):
         """Extract the cells of any type
         The cells are numbered consecutively with self.elemNumber"""
@@ -209,7 +228,7 @@ if __name__ == '__main__':
 #    infilename  = os.path.join( '/soft/numeric/feval', 'data', 'gmv', 'test1.gmv' )
 #     outfilename = os.path.join( feval.__path__[0], 'data', 'gmv', 'test1_out.gmv' )
 
-    m = FEModel()
+    m  = FEModel()
 #     from feval.fecodes.marc.MarcT16File import *  
 #     infilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal.t16')
 #     #     outfilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal.gmv')
