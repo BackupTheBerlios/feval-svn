@@ -75,12 +75,12 @@ def minimize(element, globalcoord, accuracy=1.49012e-8):
     # point embedded in a bigger space (2D element in 3D space)
     else:
         n1, n2, n3 = element.shape.cornernodes[:3]
-        normal = N.cross(element.nodcoord[n2]-element.nodcoord[n1],
-                         element.nodcoord[n3]-element.nodcoord[n2])
+        v1 = element.nodcoord[n2]-element.nodcoord[n1]
+        v2 = element.nodcoord[n3]-element.nodcoord[n2]
         retval = scipy.optimize.fsolve(element.calcDevEmbedded, element.lcoord,
                                            full_output=1, \
                                            #fprime = element.calcDDev, \
-                                           args=(globalcoord, normal), xtol = accuracy)
+                                           args=(globalcoord, v1, v2), xtol = accuracy)
     return retval[0]
 
 
@@ -156,12 +156,12 @@ class Element:
         global coordinate given in |globalcoord|""" 
         return N.dot( self.shape.calcShape(lc), self.nodcoord)-globalcoord
 
-    def calcDevEmbedded(self, lc, globalcoord, normal):
+    def calcDevEmbedded(self, lc, globalcoord, v1, v2):
         """Return the difference of the global coordinate caluculated
         with the local coordinate |lc| and the shape functions to the
         global coordinate given in |globalcoord|""" 
         x = N.dot( self.shape.calcShape(lc), self.nodcoord)-globalcoord
-        return N.dot(normal, x)
+        return N.dot(x, v1), N.dot(x, v2)
 
     def findLocalCoord(self, globalcoord, accuracy=1.49012e-8):
         """Find the local coordinates if the global coordinates
@@ -173,7 +173,7 @@ class Element:
         self.lcoord = minimize( self, globalcoord, accuracy )
         return self.lcoord
 
-    def containsPoint(self, globalcoord, accuracy = 1e-5):
+    def containsPoint(self, globalcoord, accuracy = 1.e-5):
         """Test whether the element contains a point given in global
         coordinates
         """
