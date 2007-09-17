@@ -175,13 +175,13 @@ class FEModel(ModelData):
         ekey = self.Conn.keys()[eidx]
         return self.getElement(ekey)
 
-    def findElement(self, coord):
+    def findElement(self, coord, accuracy=1.49012e-8):
         """Find the element containing the global coordinate |coord|
         """
         n = self.findClosestNode(coord)
-        for elename in self.nodeIndex[n]:
-            e = self.getElement(elename)
-            if e.containsPoint(coord):
+        for elem in self.nodeIndex[n]:
+            e = self.getElement(elem)
+            if e.containsPoint(coord, accuracy):
                 return e
         return None
 
@@ -330,12 +330,13 @@ class FEModel(ModelData):
 
         return resNodvars, resIntPointVars
 
-    def getNodVar(self, point, postvars, deriv=False):
+    def getNodVar(self, point, postvars, deriv=False, accuracy=1.49012e-8):
         """Find the values of the variables |postvars| at
         the global coordinate |point|
+        use |accuracy| to locate the points
         """
         point = N.asarray(point, dtype=N.float_)
-        element = self.findElement(point)
+        element = self.findElement(point, accuracy)
         # check wether the point is within the model
         if not element:
             return None
