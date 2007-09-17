@@ -129,7 +129,7 @@ class FEModel(ModelData):
             mincoord = self.Coord.values()[0]
         except:
             mincoord = N.zeros(3)
-        maxcoord = mincoord[:]
+        maxcoord = mincoord.copy()
         for elem in self.Conn.keys():	 # loop over elements
             coord = []
             for n in self.Conn[elem][1]:    # loop over the nodes
@@ -141,6 +141,9 @@ class FEModel(ModelData):
 
         self.elementMidPoints = N.asarray( midPoints, dtype=N.float_ )
         self.boundingbox      = N.asarray([mincoord, maxcoord])
+        self.dirty['Conn'] = False
+        self.dirty['Coord'] = False
+        self.dirty['Var'] = False
         
     def removeUnusedNodes(self):
         """remove unused Nodes
@@ -717,6 +720,8 @@ if __name__ == "__main__":
         mf = MarcPostFile(m, '/home/tinu/projects/colle/marc/cgx8_dc0.80/cgx8dec.t16')
         mf.readInc(1)
 
+    print m
+
     point = m.getCoordinate(1001)+N.array([-10,10,-50])
     direction = N.array([0,0,1])
     print m.findModelBoundaryOld(point, direction, accuracy=0.001)
@@ -725,10 +730,14 @@ if __name__ == "__main__":
     print 'culling'
     print m.findModelBoundary(point, direction, culling=True)
 
+    print m
     m.bmodel_tri.renumberNodes(1)
     m.bmodel_tri.renumberElements(1)
+    print m
     m.bmodel_tri.update()
+    print m
 
+    import feval.fecodes.gmv.GMVFile as gmv
     gf = gmv.GMVFile(m.bmodel_tri)
     gf.setWrite('gmvinput')
     gf.setWrite('nodes')
