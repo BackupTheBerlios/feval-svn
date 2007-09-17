@@ -67,10 +67,20 @@ import scipy.optimize
 #     raise ImportError
 
 def minimize(element, globalcoord, accuracy=1.49012e-8):
-    retval = scipy.optimize.fsolve(element.calcDev, element.lcoord,
-                                       full_output=1, \
-                                       #fprime = element.calcDDev, \
-                                       args=(globalcoord,), xtol = accuracy)
+    if len(globalcoord) == element.shape.dim:
+        retval = scipy.optimize.fsolve(element.calcDev, element.lcoord,
+                                           full_output=1, \
+                                           #fprime = element.calcDDev, \
+                                           args=(globalcoord,), xtol = accuracy)
+    # point embedded in a bigger space (2D element in 3D space)
+    else:
+        n1, n2, n3 = element.shape.cornernodes[:3]
+        normal = N.cross(element.nodcoord[n2]-element.nodcoord[n1],
+                         element.nodcoord[n3]-element.nodcoord[n2])
+        retval = scipy.optimize.fsolve(element.calcDevEmbedded, element.lcoord,
+                                           full_output=1, \
+                                           #fprime = element.calcDDev, \
+                                           args=(globalcoord, normal), xtol = accuracy)
     return retval[0]
 
 
@@ -93,7 +103,8 @@ class Element:
         # cut the list of the nodes to the actual nodes
         # (e.g. MARC sometimes has internal nodes)
         self.nodes    = nodes[:self.nnodes]
-        self.nodcoord = nodcoord[:self.nnodes,:self.shape.dim]
+        #self.nodcoord = nodcoord[:self.nnodes,:self.shape.dim]
+        self.nodcoord = nodcoord[:self.nnodes,:]
         self.N_ik = None
 
     def __repr__(self):
@@ -145,20 +156,29 @@ class Element:
         global coordinate given in |globalcoord|""" 
         return N.dot( self.shape.calcShape(lc), self.nodcoord)-globalcoord
 
+    def calcDevEmbedded(self, lc, globalcoord, normal):
+        """Return the difference of the global coordinate caluculated
+        with the local coordinate |lc| and the shape functions to the
+        global coordinate given in |globalcoord|""" 
+        x = N.dot( self.shape.calcShape(lc), self.nodcoord)-globalcoord
+        return N.dot(normal, x)
+
     def findLocalCoord(self, globalcoord, accuracy=1.49012e-8):
         """Find the local coordinates if the global coordinates
         |globalcoord| are given. The accuracy of the result is 
         better than |accuracy| (in local coordinates)."""
 
         # We use the pluggable function "minimize".
-        self.lcoord = minimize( self, globalcoord[:self.shape.dim], accuracy )
+        #self.lcoord = minimize( self, globalcoord[:self.shape.dim], accuracy )
+        self.lcoord = minimize( self, globalcoord, accuracy )
         return self.lcoord
 
     def containsPoint(self, globalcoord, accuracy = 1e-5):
         """Test whether the element contains a point given in global
         coordinates
         """
-        lcoord = minimize( self, globalcoord[:self.shape.dim], accuracy )
+        #lcoord = minimize( self, globalcoord[:self.shape.dim], accuracy )
+        lcoord = minimize( self, globalcoord, accuracy )
         return (N.absolute(lcoord) <= 1.+accuracy).all()
 
     def setLocalCoord(self, lcoord):
