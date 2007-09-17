@@ -150,6 +150,8 @@ class LibmeshFile(object):
         """
 
         lines = file(filename).readlines()
+        # remove empty lines
+        lines = [line for line in lines if len(line) > 2]
         
         # read the header
         self.fileType, self.versionInfo = lines[0].split()
@@ -198,7 +200,7 @@ class LibmeshFile(object):
 
         # read the boundary conditions
         if nbcond > 0:
-            cnt += 2
+            cnt += 1
             bcond = []
             for n in range(nbcond):
                 bcond.append(map(int, lines[cnt+n].split()))
@@ -263,7 +265,7 @@ class LibmeshFile(object):
             lines.append('%f %f %f \n' % tuple(self.model.getCoordinate(k)))
 
         if bcond != None:
-            lines.append('\n')
+            #lines.append('\n')
             for bc in bcond:
                 lines.append('%d %d %d\n' % tuple(bc))
 
@@ -334,6 +336,34 @@ class LibmeshFile(object):
         f.close()
 
         
+    def writeData(self, filename, ndata={}, edata={}):
+        """write either an ASCII or binary file 
+        """
+        if filename.endswith('.xta'):
+            self.writeDataASCII(filename, ndata=ndata, edata=edata)
+        elif filename.endswith('.xtr'):
+            self.writeDataBinary(filename, ndata=ndata, edata=edata)
+        else:
+            print "don't know what to do with file", filename
+
+
+    def writeDataASCII(self, filename, ndata={}, edata={}):
+        lines = []
+        lines.append('\t# Data description\n')
+        lines.append('REAL\t# type of values\n')
+        lines.append('%d\t# No. of nodes for which data is stored\n' % len(ndata))
+        lines.append('%d\t# No. of elements for which data is stored\n' % len(edata))
+        for k in sorted(ndata):
+            d = ndata[k]
+            lines.append('%d\n' % k)
+            lines.append('%d\n' % len(d))
+            lines.append('%e  '*len(d) % tuple(d) + '\n')
+        for k in sorted(edata):
+            d = edata[k]
+            lines.append('%d\n' % k)
+            lines.append('%d\n' % len(d))
+            lines.append('%e  '*len(d) % tuple(d) + '\n' )
+        file(filename,'w').writelines(lines)
 
 ### Test
 if __name__ == '__main__':
@@ -354,6 +384,13 @@ if __name__ == '__main__':
     #mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xdr')
     mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xdr', bcond = mf.bcond)
 
+    ndata = {1: [1.,99.],
+             2: [2., 101.]}
+    edata = {10: [10.],
+             20: [20., 101.],
+             3: [30., 101., 33333.],
+             }
+    mf.writeDataASCII('/home/tinu/projects/libmesh/ex2/a3.xta', ndata = ndata, edata=edata)
 #     m2 = feval.FEval.FEModel()
 #     mf2 = LibmeshFile(m2)
 #     mf2.readFile('/home/tinu/projects/libmesh/ex2/a2.xdr')
