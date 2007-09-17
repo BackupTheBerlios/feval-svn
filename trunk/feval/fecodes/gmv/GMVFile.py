@@ -17,12 +17,31 @@ class GMVFile(FETextFile):
                          'pprism6': 'Prism6',
                          '8quad 8': 'Quad8',
                          'phex20 20': 'Hex20',
+                         'phex27 27': 'Hex27',
                          }
 
     # inverse dictionary of the Element types
     invShapeFunctionDict = {}
     for k,v in shapeFunctionDict.items():
         invShapeFunctionDict[v] = k
+
+    # the node pattern is from GMV to FEval
+    nodePattern = {}
+    nodePattern['Tri3']  = [0,1,2]
+    nodePattern['Quad4'] = [0,1,2,3]
+    nodePattern['Tet4']  = [0,1,2,3]
+    nodePattern['Quad8'] = [0,1,2,3,4,5,6,7]
+    nodePattern['Hex8']  = [0,1,2,3,4,5,6,7]
+    nodePattern['Hex27'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15, 24,20,21,22,23, 25,26]
+
+    # the inverse node pattern is from FEval to GMV
+    nodePatternInv = {}
+    nodePatternInv['Tri3']  = [0,1,2]
+    nodePatternInv['Quad4'] = [0,1,2,3]
+    nodePatternInv['Tet4']  = [0,1,2,3]
+    nodePatternInv['Quad8'] = [0,1,2,3,4,5,6,7]
+    nodePatternInv['Hex8']  = [0,1,2,3,4,5,6,7]
+    nodePatternInv['Hex27'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15, 21,22,23,24,20, 25,26]
 
     def __init__(self, model):
         FETextFile.__init__(self, model)
@@ -131,9 +150,10 @@ class GMVFile(FETextFile):
         except:
             print '**** Element type %i not defined!' % (elemtype)
             elemtype = ''
+        nnodes = N.take( nodes, self.nodePattern[ elemtype ] )
         self.model.setElement(self.elemNumber,
                               elemtype,
-                              nodes )
+                              nnodes )
 
     def extract_hex(self, linelist):
         """Extract the cells of type hex"""
@@ -169,8 +189,10 @@ class GMVFile(FETextFile):
         # a loop per coordinate direction
         for id in ckeys:
             conn = self.model.Conn[id]
-            nnod = len(conn[1])
-            ll = '%i '*nnod % tuple(conn[1])
+	    nodes = conn[1]
+  	    nodes = N.take(nodes, self.nodePatternInv[ conn[0] ] )
+            nnod = len(nodes)
+            ll = '%i '*nnod % tuple(nodes)
             line = '%s\n %s\n' % (self.invShapeFunctionDict[conn[0]], ll)
             lines.append(line)
         return lines
@@ -221,39 +243,66 @@ class GMVFile(FETextFile):
 
 if __name__ == '__main__':
 
+    m = feval.FEval.FEModel()
+    import feval.fecodes.xdr.LibmeshFile as libm
+    lf = libm.LibmeshFile(m)
+    lf.readFile('/soft/numeric/libmesh/reference_elements/3D/one_hex27.xda')
+    m.update()
 
-#    infilename  = os.path.join( feval.__path__[0], 'data', 'gmv', 'test1.gmv' )
-#    infilename  = os.path.join( '/soft/numeric/feval', 'data', 'gmv', 'test1.gmv' )
-#     outfilename = os.path.join( feval.__path__[0], 'data', 'gmv', 'test1_out.gmv' )
+    e = m.getElement(0)
 
-    m  = FEModel()
-#     from feval.fecodes.marc.MarcT16File import *  
-#     infilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal.t16')
-#     #     outfilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal.gmv')
-#     outfilename = os.path.expanduser('~/projects/colle/marc/cgx8_dc0.9.gmv')
-#     #mf = MarcT16File(m, infilename)
-#     # mf = MarcT16File(m, '/home/tinu/projects/colle/marc/cgx8_dc0.90/cgx8dec.t16')
-#     mf = MarcT16File(m, '/home/tinu/numeric/marc/newsl_lafiua_tf4.0-tl4.5-tu2.5-g0.2-n4.-a5.3-v100-wl-0.06-0.0-550.0.t16')
-#     mf.readInc(-1)
+    nodes = N.take(e.nodes,e.shape.sidenodes[0])
+    print nodes
 
-#     stop
-#     from feval.fecodes.marc.MarcFile import *  
-#     mf = MarcFile(m)
-#     mf.readFile('/home/tinu/numeric/marc/ca_fm.dat')
+    m.renumberElements(1)
+    m.renumberNodes(1)
 
+    for n in m.getCoordinateNames():
+        m.setNodVar(n, m.getCoordinate(n))
+    m.setNodVarInfo(['U','V','W'])
 
     gf = GMVFile(m)
-    #gf.readFile(infilename)
-    gf.readFile('/home/tinu/projects/wrangell/libmesh/viscodens3d/out.gmv.001')
-    #gf.readFile('/home/tinu/projects/lbie/src/A.gmv')
 
-#     gf.setWrite('gmvinput')
-#     gf.setWrite('nodes')
-#     gf.setWrite('cells')
-#     gf.setWrite('variable')
-#     gf.setWrite('endgmv')
+    gf.setWrite('gmvinput')
+    gf.setWrite('nodes')
+    gf.setWrite('cells')
+    gf.setWrite('variable')
+    gf.setWrite('endgmv')
+    gf.writeFile('hex27.gmv')
 
-#     gf.writeFile(outfilename)
+
+# #    infilename  = os.path.join( feval.__path__[0], 'data', 'gmv', 'test1.gmv' )
+# #    infilename  = os.path.join( '/soft/numeric/feval', 'data', 'gmv', 'test1.gmv' )
+# #     outfilename = os.path.join( feval.__path__[0], 'data', 'gmv', 'test1_out.gmv' )
+
+#     m  = FEModel()
+# #     from feval.fecodes.marc.MarcT16File import *  
+# #     infilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal.t16')
+# #     #     outfilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal.gmv')
+# #     outfilename = os.path.expanduser('~/projects/colle/marc/cgx8_dc0.9.gmv')
+# #     #mf = MarcT16File(m, infilename)
+# #     # mf = MarcT16File(m, '/home/tinu/projects/colle/marc/cgx8_dc0.90/cgx8dec.t16')
+# #     mf = MarcT16File(m, '/home/tinu/numeric/marc/newsl_lafiua_tf4.0-tl4.5-tu2.5-g0.2-n4.-a5.3-v100-wl-0.06-0.0-550.0.t16')
+# #     mf.readInc(-1)
+
+# #     stop
+# #     from feval.fecodes.marc.MarcFile import *  
+# #     mf = MarcFile(m)
+# #     mf.readFile('/home/tinu/numeric/marc/ca_fm.dat')
+
+
+#     gf = GMVFile(m)
+#     #gf.readFile(infilename)
+#     gf.readFile('/home/tinu/projects/wrangell/libmesh/viscodens3d/out.gmv.001')
+#     #gf.readFile('/home/tinu/projects/lbie/src/A.gmv')
+
+# #     gf.setWrite('gmvinput')
+# #     gf.setWrite('nodes')
+# #     gf.setWrite('cells')
+# #     gf.setWrite('variable')
+# #     gf.setWrite('endgmv')
+
+# #     gf.writeFile(outfilename)
 
 
 
