@@ -130,7 +130,7 @@ class FEModel(ModelData):
         except:
             mincoord = N.zeros(3)
         maxcoord = mincoord.copy()
-        for elem in self.Conn.keys():	 # loop over elements
+        for elem in sorted(self.Conn.keys()):	 # loop over elements
             coord = []
             for n in self.Conn[elem][1]:    # loop over the nodes
                 coord.append( self.Coord[n] )
@@ -178,39 +178,37 @@ class FEModel(ModelData):
     def findElement(self, coord, accuracy=1.49012e-8):
         """Find the element containing the global coordinate |coord|
         """
+        # fast strategy
         n = self.findClosestNode(coord)
         for elem in self.nodeIndex[n]:
             e = self.getElement(elem)
             if e.containsPoint(coord, accuracy):
                 return e
-        return None
 
-#     def findElement(self, coord):
-#         """Find the element containing the global coordinate |coord|
-#         """
-#         e = self.findClosestElement(coord)
-#         e_old = None
-#         lc = e.findLocalCoord(coord, self.accuracy)
-#         while e and not isInRange( lc, 1.0+self.elem_tol):
-#             ee = self.findNextElement( e, lcoord = lc )
-#             # if new element is within the model
-#             # test for element ping-pong loop
-#             if ee != None and e_old != None:
-#                 print ee.name, e_old.name
-#             if ee and ee != e_old:
-#                 lc = ee.findLocalCoord(coord, self.accuracy)
-#                 e_old = e
-#                 e = ee
-#             # if no new element exists (= boundary)
-#             else:
-#                 lc = e.findLocalCoord(coord, self.accuracy)
-#                 if not isInRange( lc, 1.0+self.elem_btol):
-#                     e = None
-#                     if self.verbose:
-#                         print "The point is not within the model: ", coord
-#                 else:
-#                     return e
-#         return e
+        # if the fast strategy did not work, use the slow one
+        e = self.findClosestElement(coord)
+        e_old = None
+        lc = e.findLocalCoord(coord, self.accuracy)
+        while e and not isInRange( lc, 1.0+self.elem_tol):
+            ee = self.findNextElement( e, lcoord = lc )
+            # if new element is within the model
+            # test for element ping-pong loop
+            if ee != None and e_old != None:
+                print ee.name, e_old.name
+            if ee and ee != e_old:
+                lc = ee.findLocalCoord(coord, self.accuracy)
+                e_old = e
+                e = ee
+            # if no new element exists (= boundary)
+            else:
+                lc = e.findLocalCoord(coord, self.accuracy)
+                if not isInRange( lc, 1.0+self.elem_btol):
+                    e = None
+                    if self.verbose:
+                        print "The point is not within the model: ", coord
+                else:
+                    return e
+        return e
 
     def findElementsFromNodes(self, nodelist):
         """Find the elements containing two of the nodes in the |nodelist|,
