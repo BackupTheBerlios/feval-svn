@@ -400,7 +400,7 @@ class ShapeFunction_Hex8(ShapeFunctionPrototype):
             1.0-x-y+z+xy-xz-yz+xyz,      # -1,-1, 1,
             1.0+x-y+z-xy+xz-yz-xyz,      #  1,-1, 1,
             1.0+x+y+z+xy+xz+yz+xyz,      #  1, 1, 1,
-            1.0-x+y+z-xy-xz+yz-xyz])      # -1, 1, 1,
+            1.0-x+y+z-xy-xz+yz-xyz])     # -1, 1, 1,
 
     def calcShapeDeriv(self, lcoord):
         x, y, z = lcoord
@@ -435,37 +435,65 @@ class ShapeFunction_Hex8(ShapeFunctionPrototype):
     
     def nextPattern(self, lcoord):
         x,y,z = lcoord / max(N.absolute(lcoord)) * 1.01
-        if   x >  1: return [1,2,6,5]
-        elif x < -1: return [0,4,7,3]
-        elif y >  1: return [2,3,7,6]
-        elif y < -1: return [0,1,5,4]
-        elif z >  1: return [4,5,6,7]
-        elif z < -1: return [0,3,2,1]
+        if   x >  1: return self.sidenodes[2] #[1,2,6,5]
+        elif x < -1: return self.sidenodes[4] #[0,4,7,3]
+        elif y >  1: return self.sidenodes[3] #[2,3,7,6]
+        elif y < -1: return self.sidenodes[1] #[0,1,5,4]
+        elif z >  1: return self.sidenodes[5] #[4,5,6,7]
+        elif z < -1: return self.sidenodes[0] #[0,3,2,1]
         else:        return None
-
 
 class ShapeFunction_Hex20(ShapeFunctionPrototype):
     """Element function for linear element defined in MARC Manual B2.4-1,
     Taylor&Hughes (1981), p. 49
 
+    Here we adopt the numbering from Libmesh, i.e. the second level
+    of second order nodes comes befor the 3rd level
+
     The integration points (in parentheses) are located at unexpected
     locations (for MARC)!
 
-          7-------14------6
+#           7-------14------6
+#          /|(6)        (7)/|
+#         / |             / |
+#        15 |            13 |
+#       /  19           /   18
+#      / (4)|       (5)/    |
+#     4-------12------5     |
+#     |     |         |     |
+#     |     3------10-|-----2
+#     |    / (2)      | (3)/
+#    16   /           17  /
+#     |  11           |  9
+#     | /             | /
+#     |/ (0)       (1)|/    
+#     0-------8-------1
+
+          7-------18------6
          /|(6)        (7)/|
         / |             / |
-       15 |            13 |
-      /  19           /   18
+       19 |            17 |
+      /  15           /   14
      / (4)|       (5)/    |
-    4-------12------5     |
+    4-------16------5     |
     |     |         |     |
     |     3------10-|-----2
     |    / (2)      | (3)/
-   16   /           17  /
+   12   /           13  /
     |  11           |  9
     | /             | /
     |/ (0)       (1)|/    
     0-------8-------1
+
+
+16 - 12
+17 - 13
+18 - 14
+19 - 15
+12 - 16
+13 - 17
+14 - 18
+15 - 19
 
     """
 
@@ -475,12 +503,12 @@ class ShapeFunction_Hex20(ShapeFunctionPrototype):
     nsides      = 6
     sidetype    = 'Quad8'
     sidenodes   = N.array(
-                  [[0,11,3,10,2,9,1,8],
-                   [0,8,1,17,5,12,4,16],
-                   [1,9,2,18,6,13,5,17],
-                   [2,10,3,19,7,14,6,18],
-                   [3,11,0,16,4,15,7,19],
-                   [4,12,5,13,6,14,7,15]
+                  [[0,3,2,1,11,10,9,8],       # side 0
+                   [0,1,5,4,8, 13, 16, 12],   # side 1
+                   [1,2,6,5,9, 14, 17, 13],   # side 2
+                   [2,3,7,6,10, 15, 18, 14],  # side 3
+                   [3,0,4,7,11, 12, 19, 15],  # side 4
+                   [4,5,6,7,16, 17, 18, 19]   # side 5
                    ])
     nextnodes   = N.array(
                   [[1,3,4],
@@ -509,7 +537,7 @@ class ShapeFunction_Hex20(ShapeFunctionPrototype):
         xyz, xxy, xxz, xyy = xy*z, xx*y, xx*z, x*yy
         yyz, xzz, yzz = yy*z, x*zz, y*zz
         xxyz, xyyz, xyzz = xxy*z, xyy*z, xyz*z
-		
+
         self.f[0] = (x+y+z-xyz+xx+yy+zz-xxy-xyy-xxz-xzz-yyz-yzz+ \
                      xxyz+xyyz+xyzz-2.0)/8.0
         self.f[1] = (-x+y+z+xyz+xx+yy+zz-xxy+xyy-xxz+xzz-yyz-yzz+ \
@@ -531,14 +559,14 @@ class ShapeFunction_Hex20(ShapeFunctionPrototype):
         self.f[9]  = (1.0-z+x-xz-yy+yyz-xyy+xyyz)/4.0
         self.f[10] = (1.0-z+y-yz-xx+xxz-xxy+xxyz)/4.0
         self.f[11] = (1.0-z-x+xz-yy+yyz+xyy-xyyz)/4.0
-        self.f[12] = (1.0+z-y-yz-xx-xxz+xxy+xxyz)/4.0
-        self.f[13] = (1.0+z+x+xz-yy-yyz-xyy-xyyz)/4.0
-        self.f[14] = (1.0+z+y+yz-xx-xxz-xxy-xxyz)/4.0
-        self.f[15] = (1.0+z-x-xz-yy-yyz+xyy+xyyz)/4.0
-        self.f[16] = (1.0-y-x+xy-zz+yzz+xzz-xyzz)/4.0
-        self.f[17] = (1.0-y+x-xy-zz+yzz-xzz+xyzz)/4.0
-        self.f[18] = (1.0+y+x+xy-zz-yzz-xzz-xyzz)/4.0
-        self.f[19] = (1.0+y-x-xy-zz-yzz+xzz+xyzz)/4.0
+        self.f[16] = (1.0+z-y-yz-xx-xxz+xxy+xxyz)/4.0
+        self.f[17] = (1.0+z+x+xz-yy-yyz-xyy-xyyz)/4.0
+        self.f[18] = (1.0+z+y+yz-xx-xxz-xxy-xxyz)/4.0
+        self.f[19] = (1.0+z-x-xz-yy-yyz+xyy+xyyz)/4.0
+        self.f[12] = (1.0-y-x+xy-zz+yzz+xzz-xyzz)/4.0
+        self.f[13] = (1.0-y+x-xy-zz+yzz-xzz+xyzz)/4.0
+        self.f[14] = (1.0+y+x+xy-zz-yzz-xzz-xyzz)/4.0
+        self.f[15] = (1.0+y-x-xy-zz-yzz+xzz+xyzz)/4.0
         return self.f
 
     def calcShapeDeriv(self, lcoord):
@@ -586,30 +614,30 @@ class ShapeFunction_Hex20(ShapeFunctionPrototype):
         self.df[0, 11] = -1.0+z+yy-yyz
         self.df[1, 11] = -2.0*y+2.0*yz+2.0*xy-2.0*xyz
         self.df[2, 11] = -1.0+x+yy-xyy
-        self.df[0, 12] = -2*x-2*xz+2*xy+2*xyz
-        self.df[1, 12] = -1.0-z+xx+xxz
-        self.df[2, 12] =  1.0-y-xx+xxy
-        self.df[0, 13] =  1.0+z-yy-yyz
-        self.df[1, 13] = -2*y-2*yz-2*xy-2*xyz
-        self.df[2, 13] =  1.0+x-yy-xyy
-        self.df[0, 14] = -2*x-2*xz-2*xy-2*xyz
-        self.df[1, 14] =  1.0+z-xx-xxz
-        self.df[2, 14] =  1.0+y-xx-xxy
-        self.df[0, 15] = -1.0-z+yy+yyz
-        self.df[1, 15] = -2*y-2*yz+2*xy+2*xyz
-        self.df[2, 15] =  1.0-x-yy+xyy
-        self.df[0, 16] = -1.0+y+zz-yzz
-        self.df[1, 16] = -1.0+x+zz-xzz
-        self.df[2, 16] = -2*z+2*yz+2*xz-2*xyz
-        self.df[0, 17] =  1.0-y-zz+yzz
-        self.df[1, 17] = -1.0-x+zz+xzz
-        self.df[2, 17] = -2*z+2*yz-2*xz+2*xyz
-        self.df[0, 18] =  1.0+y-zz-yzz
-        self.df[1, 18] =  1.0+x-zz-xzz
-        self.df[2, 18] = -2*z-2*yz-2*xz-2*xyz
-        self.df[0, 19] = -1.0-y+zz+yzz
-        self.df[1, 19] =  1.0-x-zz+xzz
-        self.df[2, 19] =  -2*z-2*yz+2*xz+2*xyz
+        self.df[0, 16] = -2*x-2*xz+2*xy+2*xyz
+        self.df[1, 16] = -1.0-z+xx+xxz
+        self.df[2, 16] =  1.0-y-xx+xxy
+        self.df[0, 17] =  1.0+z-yy-yyz
+        self.df[1, 17] = -2*y-2*yz-2*xy-2*xyz
+        self.df[2, 17] =  1.0+x-yy-xyy
+        self.df[0, 18] = -2*x-2*xz-2*xy-2*xyz
+        self.df[1, 18] =  1.0+z-xx-xxz
+        self.df[2, 18] =  1.0+y-xx-xxy
+        self.df[0, 19] = -1.0-z+yy+yyz
+        self.df[1, 19] = -2*y-2*yz+2*xy+2*xyz
+        self.df[2, 19] =  1.0-x-yy+xyy
+        self.df[0, 12] = -1.0+y+zz-yzz
+        self.df[1, 12] = -1.0+x+zz-xzz
+        self.df[2, 12] = -2*z+2*yz+2*xz-2*xyz
+        self.df[0, 13] =  1.0-y-zz+yzz
+        self.df[1, 13] = -1.0-x+zz+xzz
+        self.df[2, 13] = -2*z+2*yz-2*xz+2*xyz
+        self.df[0, 14] =  1.0+y-zz-yzz
+        self.df[1, 14] =  1.0+x-zz-xzz
+        self.df[2, 14] = -2*z-2*yz-2*xz-2*xyz
+        self.df[0, 15] = -1.0-y+zz+yzz
+        self.df[1, 15] =  1.0-x-zz+xzz
+        self.df[2, 15] =  -2*z-2*yz+2*xz+2*xyz
         self.df = self.df/4.0
         return self.df
 
@@ -622,7 +650,194 @@ class ShapeFunction_Hex20(ShapeFunctionPrototype):
         elif z >  1: return [4,5,6,7]
         elif z < -1: return [0,1,2,3]
         else:        return None
+
+
         
+class ShapeFunction_Hex27(ShapeFunctionPrototype):
+    """Element function for linear element defined in MARC Manual B2.4-1,
+    Taylor&Hughes (1981), p. 49
+
+    Here we adopt the numbering from Libmesh, i.e. the second level
+    of second order nodes comes befor the 3rd level
+
+    The integration points (in parentheses) are located at unexpected
+    locations (for MARC)!
+
+          7-------18------6
+         /|(6)        (7)/|
+        / |             / |
+       19 |   [25]     17 |
+      /  15    [23]   /   14     center node: 26
+     / (4)|       (5)/    |
+    4-------16------5     |
+    | [24]|         | [22]|
+    |     3------10-|-----2
+    |    / (2)      | (3)/
+   12   /  [21]     13  /
+    |  11    [20]   |  9
+    | /             | /
+    |/ (0)       (1)|/    
+    0-------8-------1
+
+    """
+
+    name = 'Hex27'
+    dim, nnodes = 3, 27
+    cornernodes = [0,1,2,3,4,5,6,7]
+    nsides      = 6
+    sidetype    = 'Quad9'
+    sidenodes   = N.array([
+        [0, 3, 2, 1, 11, 10,  9,  8, 20], # Side 0
+        [0, 1, 5, 4,  8, 13, 16, 12, 21], # Side 1
+        [1, 2, 6, 5,  9, 14, 17, 13, 22], # Side 2
+        [2, 3, 7, 6, 10, 15, 18, 14, 23], # Side 3
+        [3, 0, 4, 7, 11, 12, 19, 15, 24], # Side 4
+        [4, 5, 6, 7, 16, 17, 18, 19, 25]  # Side 5
+        ])
+    nextnodes   = N.array(
+                  [[1,3,4],
+                   [0,2,5],
+                   [1,3,6],
+                   [0,2,7],
+                   [0,5,7],
+                   [1,4,6],
+                   [2,5,7],
+                   [3,4,6],
+                   ])
+    gaussDist = 0.774596669241483  # = N.sqrt(0.6)
+    lcoordGauss = N.array([ [-1., -1., -1.],
+                            [ 1., -1., -1.],
+                            [-1.,  1., -1.],
+                            [ 1.,  1., -1.],
+                            [-1., -1.,  1.],
+                            [ 1., -1.,  1.],
+                            [-1.,  1.,  1.],
+                            [ 1.,  1.,  1.]])*gaussDist
+
+    def calcShape(self, lcoord):
+        print 'not implemented'
+        return None
+#         x, y, z = lcoord
+#         xy, xz, yz = x*y, x*z, y*z
+#         xx, yy, zz = x*x, y*y, z*z
+#         xyz, xxy, xxz, xyy = xy*z, xx*y, xx*z, x*yy
+#         yyz, xzz, yzz = yy*z, x*zz, y*zz
+#         xxyz, xyyz, xyzz = xxy*z, xyy*z, xyz*z
+		
+#         self.f[0] = (x+y+z-xyz+xx+yy+zz-xxy-xyy-xxz-xzz-yyz-yzz+ \
+#                      xxyz+xyyz+xyzz-2.0)/8.0
+#         self.f[1] = (-x+y+z+xyz+xx+yy+zz-xxy+xyy-xxz+xzz-yyz-yzz+ \
+#                      xxyz-xyyz-xyzz-2.0)/8.0
+#         self.f[2] = (-x-y+z-xyz+xx+yy+zz+xxy+xyy-xxz+xzz-yyz+yzz- \
+#                      xxyz-xyyz+xyzz-2.0)/8.0
+#         self.f[3] = (x-y+z+xyz+xx+yy+zz+xxy-xyy-xxz-xzz-yyz+yzz- \
+#                      xxyz+xyyz-xyzz-2.0)/8.0
+#         self.f[4] = (x+y-z+xyz+xx+yy+zz-xxy-xyy+xxz-xzz+yyz-yzz- \
+#                      xxyz-xyyz+xyzz-2.0)/8.0
+#         self.f[5] = (-x+y-z-xyz+xx+yy+zz-xxy+xyy+xxz+xzz+yyz-yzz- \
+#                      xxyz+xyyz-xyzz-2.0)/8.0
+#         self.f[6] = (-x-y-z+xyz+xx+yy+zz+xxy+xyy+xxz+xzz+yyz+yzz+ \
+#                      xxyz+xyyz+xyzz-2.0)/8.0
+#         self.f[7] = (x-y-z-xyz+xx+yy+zz+xxy-xyy+xxz-xzz+yyz+yzz+ \
+#                      xxyz-xyyz-xyzz-2.0)/8.0
+
+#         self.f[8]  = (1.0-z-y+yz-xx+xxz+xxy-xxyz)/4.0
+#         self.f[9]  = (1.0-z+x-xz-yy+yyz-xyy+xyyz)/4.0
+#         self.f[10] = (1.0-z+y-yz-xx+xxz-xxy+xxyz)/4.0
+#         self.f[11] = (1.0-z-x+xz-yy+yyz+xyy-xyyz)/4.0
+#         self.f[12] = (1.0+z-y-yz-xx-xxz+xxy+xxyz)/4.0
+#         self.f[13] = (1.0+z+x+xz-yy-yyz-xyy-xyyz)/4.0
+#         self.f[14] = (1.0+z+y+yz-xx-xxz-xxy-xxyz)/4.0
+#         self.f[15] = (1.0+z-x-xz-yy-yyz+xyy+xyyz)/4.0
+#         self.f[16] = (1.0-y-x+xy-zz+yzz+xzz-xyzz)/4.0
+#         self.f[17] = (1.0-y+x-xy-zz+yzz-xzz+xyzz)/4.0
+#         self.f[18] = (1.0+y+x+xy-zz-yzz-xzz-xyzz)/4.0
+#         self.f[19] = (1.0+y-x-xy-zz-yzz+xzz+xyzz)/4.0
+#         return self.f
+
+    def calcShapeDeriv(self, lcoord):
+        print 'not implemented'
+        return None
+#         x, y, z = lcoord
+#         xy, xz, yz = x*y, x*z, y*z
+#         xx, yy, zz = x*x, y*y, z*z
+#         xyz, xxy, xxz, xyy = xy*z, xx*y, xx*z, x*yy
+#         yyz, xzz, yzz = yy*z, x*zz, y*zz
+
+#         self.df[0, 0] =	 1.0-yz+2.0*x-2.0*xy-yy-2.0*xz-zz+2.0*xyz+yyz+yzz
+#         self.df[1, 0] =	 1.0-xz+2.0*y-xx-2.0*xy-2.0*yz-zz+xxz+2.0*xyz+xzz
+#         self.df[2, 0] =	 1.0-xy+2.0*z-xx-2.0*xz-yy-2.0*yz+xxy+xyy+2.0*xyz
+#         self.df[0, 1] = -1.0+yz+2.0*x-2.0*xy+yy-2.0*xz+zz+2.0*xyz-yyz-yzz
+#         self.df[1, 1] =	 1.0+xz+2.0*y-xx+2.0*xy-2.0*yz-zz+xxz-2.0*xyz-xzz
+#         self.df[2, 1] =	 1.0+xy+2.0*z-xx+2.0*xz-yy-2.0*yz+xxy-xyy-2.0*xyz
+#         self.df[0, 2] = -1.0-yz+2.0*x+2.0*xy+yy-2.0*xz+zz-2.0*xyz-yyz+yzz
+#         self.df[1, 2] = -1.0-xz+2.0*y+xx+2.0*xy-2.0*yz+zz-xxz-2.0*xyz+xzz
+#         self.df[2, 2] =	 1.0-xy+2.0*z-xx+2.0*xz-yy+2.0*yz-xxy-xyy+2.0*xyz
+#         self.df[0, 3] =	 1.0+yz+2.0*x+2.0*xy-yy-2.0*xz-zz-2.0*xyz+yyz-yzz
+#         self.df[1, 3] = -1.0+xz+2.0*y+xx-2.0*xy-2.0*yz+zz-xxz+2.0*xyz-xzz
+#         self.df[2, 3] =	 1.0+xy+2.0*z-xx-2.0*xz-yy+2.0*yz-xxy+xyy-2.0*xyz
+#         self.df[0, 4] =	 1.0+yz+2.0*x-2.0*xy-yy+2.0*xz-zz-2.0*xyz-yyz+yzz
+#         self.df[1, 4] =	 1.0+xz+2.0*y-xx-2.0*xy+2.0*yz-zz-xxz-2.0*xyz+xzz
+#         self.df[2, 4] = -1.0+xy+2.0*z+xx-2.0*xz+yy-2.0*yz-xxy-xyy+2.0*xyz
+#         self.df[0, 5] = -1.0-yz+2.0*x-2.0*xy+yy+2.0*xz+zz-2.0*xyz+yyz-yzz
+#         self.df[1, 5] =	 1.0-xz+2.0*y-xx+2.0*xy+2.0*yz-zz-xxz+2.0*xyz-xzz
+#         self.df[2, 5] = -1.0-xy+2.0*z+xx+2.0*xz+yy-2.0*yz-xxy+xyy-2.0*xyz
+#         self.df[0, 6] = -1.0+yz+2.0*x+2.0*xy+yy+2.0*xz+zz+2.0*xyz+yyz+yzz
+#         self.df[1, 6] = -1.0+xz+2.0*y+xx+2.0*xy+2.0*yz+zz+xxz+2.0*xyz+xzz
+#         self.df[2, 6] = -1.0+xy+2.0*z+xx+2.0*xz+yy+2.0*yz+xxy+xyy+2.0*xyz
+#         self.df[0, 7] =	 1.0-yz+2.0*x+2.0*xy-yy+2.0*xz-zz+2.0*xyz-yyz-yzz
+#         self.df[1, 7] = -1.0-xz+2.0*y+xx-2.0*xy+2.0*yz+zz+xxz-2.0*xyz-xzz
+#         self.df[2, 7] = -1.0-xy+2.0*z+xx-2.0*xz+yy+2.0*yz+xxy-xyy-2.0*xyz
+#         self.df[:, 0:8] = self.df[:, 0:8]/2.0
+        
+#         self.df[0, 8] = -2.0*x+2.0*xz+2.0*xy-2.0*xyz
+#         self.df[1, 8] = -1.0+z+xx-xxz
+#         self.df[2, 8] = -1.0+y+xx-xxy
+#         self.df[0, 9] =	 1.0-z-yy+yyz
+#         self.df[1, 9] = -2.0*y+2.0*yz-2.0*xy+2.0*xyz
+#         self.df[2, 9] = -1.0-x+yy+xyy
+#         self.df[0, 10] = -2.0*x+2.0*xz-2.0*xy+2.0*xyz
+#         self.df[1, 10] =  1.0-z-xx+xxz
+#         self.df[2, 10] = -1.0-y+xx+xxy
+#         self.df[0, 11] = -1.0+z+yy-yyz
+#         self.df[1, 11] = -2.0*y+2.0*yz+2.0*xy-2.0*xyz
+#         self.df[2, 11] = -1.0+x+yy-xyy
+#         self.df[0, 12] = -2*x-2*xz+2*xy+2*xyz
+#         self.df[1, 12] = -1.0-z+xx+xxz
+#         self.df[2, 12] =  1.0-y-xx+xxy
+#         self.df[0, 13] =  1.0+z-yy-yyz
+#         self.df[1, 13] = -2*y-2*yz-2*xy-2*xyz
+#         self.df[2, 13] =  1.0+x-yy-xyy
+#         self.df[0, 14] = -2*x-2*xz-2*xy-2*xyz
+#         self.df[1, 14] =  1.0+z-xx-xxz
+#         self.df[2, 14] =  1.0+y-xx-xxy
+#         self.df[0, 15] = -1.0-z+yy+yyz
+#         self.df[1, 15] = -2*y-2*yz+2*xy+2*xyz
+#         self.df[2, 15] =  1.0-x-yy+xyy
+#         self.df[0, 16] = -1.0+y+zz-yzz
+#         self.df[1, 16] = -1.0+x+zz-xzz
+#         self.df[2, 16] = -2*z+2*yz+2*xz-2*xyz
+#         self.df[0, 17] =  1.0-y-zz+yzz
+#         self.df[1, 17] = -1.0-x+zz+xzz
+#         self.df[2, 17] = -2*z+2*yz-2*xz+2*xyz
+#         self.df[0, 18] =  1.0+y-zz-yzz
+#         self.df[1, 18] =  1.0+x-zz-xzz
+#         self.df[2, 18] = -2*z-2*yz-2*xz-2*xyz
+#         self.df[0, 19] = -1.0-y+zz+yzz
+#         self.df[1, 19] =  1.0-x-zz+xzz
+#         self.df[2, 19] =  -2*z-2*yz+2*xz+2*xyz
+#         self.df = self.df/4.0
+#         return self.df
+
+    def nextPattern(self, lcoord):
+        x,y,z = lcoord / max(N.absolute(lcoord)) * 1.01
+        if   x >  1: return [1,2,6,5]
+        elif x < -1: return [0,3,7,4]
+        elif y >  1: return [2,3,7,6]
+        elif y < -1: return [0,1,5,4]
+        elif z >  1: return [4,5,6,7]
+        elif z < -1: return [0,1,2,3]
+        else:        return None
 # all shape functions are registered here
 
 shapeFunctions = {
@@ -630,7 +845,8 @@ shapeFunctions = {
     'Quad4': ShapeFunction_Quad4,
     'Quad8': ShapeFunction_Quad8,
     'Hex8' : ShapeFunction_Hex8, 
-    'Hex20': ShapeFunction_Hex20
+    'Hex20': ShapeFunction_Hex20,
+    'Hex27': ShapeFunction_Hex27
    }
 
 if __name__ == '__main__':
