@@ -1,5 +1,5 @@
 import re
-import Numeric; N = Numeric
+import numpy as N
 from feval.FEval import *
 from feval.FETextFile import *
 
