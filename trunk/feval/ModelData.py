@@ -210,6 +210,9 @@ class ModelData:
     def renumberNodes(self, base=1):
         """renumber all nodes starting with |base|
         also change the number in the connectivty and the set definition
+        
+        returns a dictionary |trans| with the old numbers as keys and the new
+        numbers as values
         """
         newCoord = {}
         trans = {}
@@ -233,11 +236,16 @@ class ModelData:
             self.NodVar = newNodVar
         self.makeModelCache()
         self.dirty['Coord'] = True
+        self.dirty['Conn'] = True
+        return trans
         
 
     def renumberElements(self, base=1):
         """renumber all elements starting with |base|
         also change the number in the set definition
+
+        returns a dictionary |trans| with the old numbers as keys and the new
+        numbers as values
         """
         newConn = {}
         trans = {}
@@ -255,7 +263,7 @@ class ModelData:
                 self.Sets['elem'][key] = newelem
         self.makeModelCache()
         self.dirty['Conn'] = True
-
+        return trans
 
 if __name__ == '__main__':
 
@@ -271,7 +279,7 @@ if __name__ == '__main__':
     m.update()
     print m
     
-    m.renumberElements(base=0)
-    m.renumberNodes(base=0)
+    eidx = m.renumberElements(base=0)
+    nidx = m.renumberNodes(base=0)
     
     print m

@@ -28,6 +28,8 @@ class TextFile:
 
     type = 'genericFETextFile'
 
+    sectionsStd = []
+
     magicID = 'MAGIC:'
     magicIDlen = len(magicID)
     shapeFunctionDict = {}

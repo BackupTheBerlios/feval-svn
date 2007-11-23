@@ -100,6 +100,8 @@ if __name__ == '__main__':
 #    mf = MarcPostFile(m, '/home/tinu/projects/colle/marc/ca8_t.t16')
     mf = MarcPostFile(m, '/home/soft/numeric/feval/trunk/data/marc/1_10_long.t16')
     mf.readInc(1)
+    print m.NodVarInfo[5:9]
+    print m.getNodVar(m.Coord[1], m.NodVarInfo[5:9])
     f = mf.file
 
     stop

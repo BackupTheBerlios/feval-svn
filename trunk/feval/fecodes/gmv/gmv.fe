@@ -14,9 +14,10 @@ cells          connectivity
 gmvinput
 endgmv
 # the different cell types have to be extracted individually
+tri
+hex
 hex8
 phex8
-hex
 quad
 8quad
 phex20
@@ -24,6 +25,7 @@ phex20
 velocity
 variable
 endvars
+material
 probtime
 
 [end]

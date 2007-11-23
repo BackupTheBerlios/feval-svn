@@ -14,6 +14,8 @@ class GMSHFile(FETextFile):
     """
     type = 'gmsh'
 
+    sections = ['nod', 'elm']
+
     # Dictionary of the Element types
     shapeFunctionDict = { 1: 'Line1', \
 			  2: 'Tri3',
@@ -46,6 +48,7 @@ class GMSHFile(FETextFile):
 
     def __init__(self, model):
 	FETextFile.__init__(self, model)
+        self.sections = self.sectionsStd
 
 	# Pairs of characters used to mark comments
 	self.Comment = [( '#', '\n' )] 

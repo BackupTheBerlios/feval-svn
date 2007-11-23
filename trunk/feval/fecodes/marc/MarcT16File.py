@@ -171,7 +171,6 @@ class MarcT16File(FortranBinaryFile):
     def _readBlock1(self):
         title = self.__readRecord('c4')
         self.model.setName( title.strip() )
-        stop
 
     def _readBlocks2to13(self):
         # Lists with the node and element names

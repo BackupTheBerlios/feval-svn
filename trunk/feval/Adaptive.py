@@ -4,13 +4,13 @@ import numpy as N
 import feval.FEval
 import random
 
-def subdivideHex(model, elem, globalrefinenodes, fact=2./3.):
+def subdivideHex(model, elem, globalrefinenodes, refine=3):
     """subdivide a Hex8 element |elem|
     around the nodes |refinenodes| (in global node numbering)
     remove |elem| from the model |model| and
     insert the subelements
-    |fact| should be 2./3., except for refinement around one node
-    when it can also be 1.
+    |refine| should be 3, except for refinement around one node
+    when it can also be 2
     """
 
     assert(elem.shape.name == 'Hex8')
@@ -46,6 +46,9 @@ def subdivideHex(model, elem, globalrefinenodes, fact=2./3.):
     if not n_refinenodes in [1,2,4,8]:
         n_refinenodes = 8
 
+    # The new nodes for refinement are given as points on a grid of 64
+    # point 0 is lower left, point 64 is upper right
+    
     # only one edge needs to be refined
     if n_refinenodes == 1:
         corneridx = [[ 0,  1,  5,  4, 16, 17, 21, 20],
@@ -170,6 +173,9 @@ def subdivideHex(model, elem, globalrefinenodes, fact=2./3.):
     elem.nodes    = [elem.nodes[x] for x in swapcorners[refinenode]]
     elem.nodcoord = [elem.nodcoord[x] for x in swapcorners[refinenode]]
 
+    # factor where to place the new nodes
+    fact = 2./float(refine)
+
     # additional nodes on a 2.5th level, only for 4 node side
     if len(refinenodes) == 4:
         coord = elem.findGlobalCoord(N.array([1., 1., 1.5])*fact-1.)
@@ -181,14 +187,16 @@ def subdivideHex(model, elem, globalrefinenodes, fact=2./3.):
         coord = elem.findGlobalCoord(N.array([1., 2., 1.5])*fact-1.)
         model.setCoordinate(elename+'_74', coord)
 
+    # the points at the location of the original corner nodes 
     cornerlist = [0,3,15,12,48,51,63,60]
     for i, corners in enumerate(corneridx):
         for n in corners:
             if n < 64 and not n in cornerlist:
                 lcoord = N.array((n%4, n//4 %4, n//16))*fact -1.
+                print lcoord
                 coord  = elem.findGlobalCoord(lcoord)
                 model.setCoordinate(elename+'_%d' % n, coord)
-        nodenames = [str(elename)+'_%d' % n for n in corners]
+        nodenames = [elename+'_%d' % n for n in corners]
         # the order in the list is crucial!
         for n, nn in zip(elem.nodes, [elename+'_%d' % n for n in cornerlist]):
             try:
@@ -199,48 +207,65 @@ def subdivideHex(model, elem, globalrefinenodes, fact=2./3.):
         # bring the nodes in the initial order
         # so that all faces are oriented as before refinement
         nodenames = [nodenames[j] for j in N.argsort(swapcorners[refinenode])]
-        model.setElement(str(elename) + '_%s' % i, 'Hex8', nodenames)
+        model.setElement(elename + '_%s' % i, 'Hex8', nodenames)
     model.removeElement(elem.name)
 
 if __name__ == '__main__':
     m = feval.FEval.FEModel()
-    m.setCoordinate(1, [0.,0.,0.])
-    m.setCoordinate(2, [1.,0.,0.])
-    m.setCoordinate(3, [1.,1.,0.])
-    m.setCoordinate(4, [0.,1.,0.])
-    m.setCoordinate(5, [0.,0.,1.])
-    m.setCoordinate(6, [1.,0.,1.])
-    m.setCoordinate(7, [1.,1.,1.])
-    m.setCoordinate(8, [0.,1.,1.])
-    m.setConn('x', 'Hex8', range(1,9))
-    m.makeModelCache()
-    #m.renumberNodes(base = 1)
+#     m.setCoordinate(1, [0.,0.,0.])
+#     m.setCoordinate(2, [1.,0.,0.])
+#     m.setCoordinate(3, [1.,1.,0.])
+#     m.setCoordinate(4, [0.,1.,0.])
+#     m.setCoordinate(5, [0.,0.,1.])
+#     m.setCoordinate(6, [1.,0.,1.])
+#     m.setCoordinate(7, [1.,1.,1.])
+#     m.setCoordinate(8, [0.,1.,1.])
+#     m.setConn('x', 'Hex8', range(1,9))
+#     m.makeModelCache()
+#     #m.renumberNodes(base = 1)
     
-    e =  m.findClosestElement(N.asarray([0., 1., 0.5]))
+#     e =  m.findClosestElement(N.asarray([0., 1., 0.5]))
 
-    #subdivideHex(m, e, [0,1,2,3, 4, 5, 6, 7])
-    #subdivideHex(m, e, [0,4,1,5])
-    #subdivideHex(m, e, [7], fact=1.)
-    subdivideHex(m, e, 1, fact=1.)
+#     #subdivideHex(m, e, [0,1,2,3, 4, 5, 6, 7])
+#     #subdivideHex(m, e, [0,4,1,5])
+#     #subdivideHex(m, e, [7], fact=1.)
+#     subdivideHex(m, e, 1, fact=1.)
 
+#     m.renumberNodes()
+#     m.renumberElements()
+
+#     import feval.fecodes.gmsh.GMSHFile
+#     gf = feval.fecodes.gmsh.GMSHFile.GMSHFile(m)
+#     gf.setWrite('nod')
+#     gf.setWrite('elm')
+#     gf.writeFile('X.gmsh')
+
+
+    import feval.Hexmesh
+    print 'creating/reading file'
+
+    # create Hexmesh
+    feval.Hexmesh.makeCube(m,
+                 0., 2.,
+                 0., 3.,
+                 0., 4.,
+                 6, 6, 6)
     m.renumberNodes()
     m.renumberElements()
+    
+    refinenode = 284
+    elems = m.nodeIndex[refinenode]
+    for ele in elems:
+        subdivideHex(m, m.getElement(ele), refinenode)
 
+    m.sweepNodes()
+    m.renumberNodes()
+    m.renumberElements()
+    
     import feval.fecodes.gmsh.GMSHFile
     gf = feval.fecodes.gmsh.GMSHFile.GMSHFile(m)
     gf.setWrite('nod')
     gf.setWrite('elm')
     gf.writeFile('X.gmsh')
-
-#     import feval.fecodes.gmv.GMVFile as gmv
-#     mf = gmv.GMVFile(m)
-
-#     mf.setWrite('gmvinput')
-#     mf.setWrite('nodes')
-#     mf.setWrite('cells')
-#     mf.setWrite('endgmv')
-
-#     mf.writeFile('adaptive.gmv.000')
-
 
 

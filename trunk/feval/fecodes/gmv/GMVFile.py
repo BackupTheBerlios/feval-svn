@@ -32,6 +32,7 @@ class GMVFile(FETextFile):
     nodePattern['Tet4']  = [0,1,2,3]
     nodePattern['Quad8'] = [0,1,2,3,4,5,6,7]
     nodePattern['Hex8']  = [0,1,2,3,4,5,6,7]
+    nodePattern['Hex20'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15]
     nodePattern['Hex27'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15, 24,20,21,22,23, 25,26]
 
     # the inverse node pattern is from FEval to GMV
@@ -41,6 +42,7 @@ class GMVFile(FETextFile):
     nodePatternInv['Tet4']  = [0,1,2,3]
     nodePatternInv['Quad8'] = [0,1,2,3,4,5,6,7]
     nodePatternInv['Hex8']  = [0,1,2,3,4,5,6,7]
+    nodePatternInv['Hex20'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15]
     nodePatternInv['Hex27'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15, 21,22,23,24,20, 25,26]
 
     def __init__(self, model):
@@ -179,6 +181,10 @@ class GMVFile(FETextFile):
         """Extract the cells of type 8quad"""
         self.extract_element(linelist)
 
+    def extract_tri(self, linelist):
+        """Extract the cells of type quad"""
+        self.extract_element(linelist)
+
     def compose_cells(self):
         """Write elements in increasing order, one line per coordinate"""
         lines = []
@@ -243,39 +249,39 @@ class GMVFile(FETextFile):
 
 if __name__ == '__main__':
 
-    m = feval.FEval.FEModel()
-    import feval.fecodes.xdr.LibmeshFile as libm
-    lf = libm.LibmeshFile(m)
-    lf.readFile('/soft/numeric/libmesh/reference_elements/3D/one_hex27.xda')
-    m.update()
+#     m = feval.FEval.FEModel()
+#     import feval.fecodes.xdr.LibmeshFile as libm
+#     lf = libm.LibmeshFile(m)
+#     lf.readFile('/soft/numeric/libmesh/reference_elements/3D/one_hex27.xda')
+#     m.update()
 
-    e = m.getElement(0)
+#     e = m.getElement(0)
 
-    nodes = N.take(e.nodes,e.shape.sidenodes[0])
-    print nodes
+#     nodes = N.take(e.nodes,e.shape.sidenodes[0])
+#     print nodes
 
-    m.renumberElements(1)
-    m.renumberNodes(1)
+#     m.renumberElements(1)
+#     m.renumberNodes(1)
 
-    for n in m.getCoordinateNames():
-        m.setNodVar(n, m.getCoordinate(n))
-    m.setNodVarInfo(['U','V','W'])
+#     for n in m.getCoordinateNames():
+#         m.setNodVar(n, m.getCoordinate(n))
+#     m.setNodVarInfo(['U','V','W'])
 
-    gf = GMVFile(m)
+#     gf = GMVFile(m)
 
-    gf.setWrite('gmvinput')
-    gf.setWrite('nodes')
-    gf.setWrite('cells')
-    gf.setWrite('variable')
-    gf.setWrite('endgmv')
-    gf.writeFile('hex27.gmv')
+#     gf.setWrite('gmvinput')
+#     gf.setWrite('nodes')
+#     gf.setWrite('cells')
+#     gf.setWrite('variable')
+#     gf.setWrite('endgmv')
+#     gf.writeFile('hex27.gmv')
 
 
 # #    infilename  = os.path.join( feval.__path__[0], 'data', 'gmv', 'test1.gmv' )
 # #    infilename  = os.path.join( '/soft/numeric/feval', 'data', 'gmv', 'test1.gmv' )
 # #     outfilename = os.path.join( feval.__path__[0], 'data', 'gmv', 'test1_out.gmv' )
 
-#     m  = FEModel()
+    m  = FEModel()
 # #     from feval.fecodes.marc.MarcT16File import *  
 # #     infilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal.t16')
 # #     #     outfilename = os.path.expanduser('~/projects/jako/marc/jako3dd_polythermal.gmv')
@@ -291,18 +297,8 @@ if __name__ == '__main__':
 # #     mf.readFile('/home/tinu/numeric/marc/ca_fm.dat')
 
 
-#     gf = GMVFile(m)
-#     #gf.readFile(infilename)
-#     gf.readFile('/home/tinu/projects/wrangell/libmesh/viscodens3d/out.gmv.001')
-#     #gf.readFile('/home/tinu/projects/lbie/src/A.gmv')
-
-# #     gf.setWrite('gmvinput')
-# #     gf.setWrite('nodes')
-# #     gf.setWrite('cells')
-# #     gf.setWrite('variable')
-# #     gf.setWrite('endgmv')
-
-# #     gf.writeFile(outfilename)
+    gf = GMVFile(m)
+    gf.readFile('/home/tinu/projects/balance/model/osc_bg=0.006,T=20,ELA=1600,dELA=100,alpha=5/results/out.gmv.00000')
 
 
 

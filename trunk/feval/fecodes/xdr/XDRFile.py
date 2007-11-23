@@ -172,8 +172,8 @@ if __name__ == '__main__':
 
     from feval.fecodes.marc.MarcFile import *  
     mf = MarcFile(m)
-#     mf.readFile('/home/tinu/numeric/feval/feval/data/marc/test1.dat')
-    mf.readFile('/home/tinu/projects/jako/marc/jako3d_isothermal.dat')
+    mf.readFile('../../../data/marc/test1.dat')
+#    mf.readFile('/home/tinu/projects/jako/marc/jako3d_isothermal.dat')
 
     m.renumberNodes(base=0)
     m.renumberElements(base=0)
