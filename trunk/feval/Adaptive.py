@@ -253,7 +253,7 @@ if __name__ == '__main__':
     m.renumberNodes()
     m.renumberElements()
     
-    refinenode = 284
+    refinenode = 323
     elems = m.nodeIndex[refinenode]
     for ele in elems:
         subdivideHex(m, m.getElement(ele), refinenode)

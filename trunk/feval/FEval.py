@@ -249,19 +249,20 @@ class FEModel(ModelData):
             nextnodes = list(
                 set(actelem.shape.sidenodes[sidenr]).intersection(actelem.shape.cornernodes))
         # loop over the nodes in the list of the next nodes
-        elems = []
+        elems = dict()
         # find all elements that share the nextnodes
         for n in nextnodes:
-            elems.extend(self.nodeIndex[actelem.nodes[n]])
+            for k in self.nodeIndex[actelem.nodes[n]]:
+                elems[k] = elems.setdefault(k, 0) + 1
         # delete the present element from that list
-        elems.remove(actelem.name)
+        elems.pop(actelem.name)
+
         # find the element with the same number of nodes on that side
         # was soll das. falsch!!!
-        for e in elems:
-            if elems.count(e) == len(nextnodes):
+        for e,v in elems.items():
+            if v == len(nextnodes):
                 return self.getElement( e )
         return None
-
 
     def getElement(self, elename):
         """Create an element instance from the connectivity information

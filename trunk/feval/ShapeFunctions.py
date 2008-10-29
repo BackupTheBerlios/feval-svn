@@ -83,6 +83,48 @@ class ShapeFunctionPrototype:
         self.gaussShapeInv = LA.pinv(self.gaussShape)
 
 
+class ShapeFunction_Line2(ShapeFunctionPrototype):
+    """Element function for linear element defined
+
+    0-------1
+    """
+
+    name = 'Line2'
+    dim, nnodes = 2, 2
+    cornernodes = N.array([0,1])
+    nsides      = 2
+    sidetype    = 'Point1'
+    sidenodes   = N.array(
+                  [[0],
+                   [1],
+                   ])
+    nextnodes   = N.array(
+                  [[1],
+                   [0],
+                   ])
+    gaussDist = 0.577350269189626  # 1./N.sqrt(3)
+    lcoordGauss = N.array([ [-1.],
+                            [ 1.],
+                            ])*gaussDist
+    
+    def calcShape(self, lcoord):
+        x = lcoord[0]
+        return 0.5*N.array([
+            1.0-x,
+            1.0+x ])
+
+    def calcShapeDeriv(self, lcoord):
+        x = lcoord[0]
+        return N.array([ -0.5, 0.5 ])
+
+    def nextPattern(self, lcoord):
+        x = lcoord * 1.01
+        if   x >  1: return [1]
+        elif x < -1: return [0]
+        else:        return None
+
+
+
 class ShapeFunction_Tri3(ShapeFunctionPrototype):
     """Element function for linear element defined in MARC Manual B2.4-1, 
     Taylor&Hughes (1981), p. 49
@@ -119,32 +161,26 @@ class ShapeFunction_Tri3(ShapeFunctionPrototype):
     
     def calcShape(self, lcoord):
         x, y = lcoord
-        xy = x*y
-        return 0.25*N.array([
-            1.0-x-y+xy, 
-            1.0+x-y-xy,
-            1.0+x+y+xy,
-            1.0-x+y-xy])
+        return N.array([
+            1.-x-y,
+            x,
+            y ])
 
     def calcShapeDeriv(self, lcoord):
         x, y = lcoord
-        self.df[0,0] = -1.0+y
-        self.df[0,1] =	1.0-y
-        self.df[0,2] =	1.0+y
-        self.df[0,3] = -1.0-y
-        self.df[1,0] = -1.0+x
-        self.df[1,1] = -1.0-x
-        self.df[1,2] =	1.0+x
-        self.df[1,3] =	1.0-x
-        self.df = self.df*0.25
+        self.df[0,0] = -1.0
+        self.df[0,1] =	1.0
+        self.df[0,2] =	0.
+        self.df[1,0] = -1.0
+        self.df[1,1] =  0.
+        self.df[1,2] =	1.0
         return self.df
 
     def nextPattern(self, lcoord):
         x,y = lcoord / max(N.absolute(lcoord)) * 1.01
-        if   x >  1: return [1,2]
-        elif x < -1: return [3,0]
-        elif y >  1: return [2,3]
-        elif y < -1: return [0,1]
+        if   x+y > 1: return [1,2]
+        elif y < 0:   return [0,1]
+        elif x < 0:   return [2,0]
         else:        return None
 
 
@@ -658,7 +694,7 @@ class ShapeFunction_Hex27(ShapeFunctionPrototype):
     Taylor&Hughes (1981), p. 49
 
     Here we adopt the numbering from Libmesh, i.e. the second level
-    of second order nodes comes befor the 3rd level
+    of second order nodes comes before the 3rd level
 
     The integration points (in parentheses) are located at unexpected
     locations (for MARC)!
@@ -687,12 +723,12 @@ class ShapeFunction_Hex27(ShapeFunctionPrototype):
     nsides      = 6
     sidetype    = 'Quad9'
     sidenodes   = N.array([
-        [0, 3, 2, 1, 11, 10,  9,  8, 20], # Side 0
-        [0, 1, 5, 4,  8, 13, 16, 12, 21], # Side 1
-        [1, 2, 6, 5,  9, 14, 17, 13, 22], # Side 2
-        [2, 3, 7, 6, 10, 15, 18, 14, 23], # Side 3
-        [3, 0, 4, 7, 11, 12, 19, 15, 24], # Side 4
-        [4, 5, 6, 7, 16, 17, 18, 19, 25]  # Side 5
+        [0, 3, 2, 1, 11, 10,  9,  8, 20], # Side 0   (exodus: 5)   20 -> 22
+        [0, 1, 5, 4,  8, 13, 16, 12, 21], # Side 1   (exodus: 1)   21 -> 26
+        [1, 2, 6, 5,  9, 14, 17, 13, 22], # Side 2   (exodus: 2)   22 -> 25
+        [2, 3, 7, 6, 10, 15, 18, 14, 23], # Side 3   (exodus: 3)   23 -> 27
+        [3, 0, 4, 7, 11, 12, 19, 15, 24], # Side 4   (exodus: 4)   24 -> 24
+        [4, 5, 6, 7, 16, 17, 18, 19, 25]  # Side 5   (exodus: 6)   25 -> 23
         ])
     nextnodes   = N.array(
                   [[1,3,4],
@@ -841,6 +877,7 @@ class ShapeFunction_Hex27(ShapeFunctionPrototype):
 # all shape functions are registered here
 
 shapeFunctions = {
+    'Line2': ShapeFunction_Line2,
     'Tri3':  ShapeFunction_Tri3,
     'Quad4': ShapeFunction_Quad4,
     'Quad8': ShapeFunction_Quad8,
@@ -850,10 +887,11 @@ shapeFunctions = {
    }
 
 if __name__ == '__main__':
+
     for n, sf in shapeFunctions.items():
         print '===== %s =====' % n
         s = sf()
-        s.calcGauss()
-        print s.gaussShapeInv
+#         s.calcGauss()
+#         print s.gaussShapeInv
     
 

@@ -188,20 +188,40 @@ class Element:
 if __name__ == '__main__':
     
     import ShapeFunctions
-    sh = ShapeFunctions.shapeFunctions['Quad4']()
-    nodes = [1, 2, 3, 4]
-    #nodcoord = N.array(([0,0], [2,0], [3,2], [0,2]),dtype=N.float_)
-    nodcoord = N.array(([0.2,0.], [10.,0.], [1,2], [0,3.]),dtype=N.float_)
+    sh = ShapeFunctions.shapeFunctions['Tri3']()
+    nodes = [1, 2, 3]
+    nodcoord = N.array(([0.,0.], [1,0.], [0.5,1]),dtype=N.float_)
     e = Element( nodes, sh, nodcoord, 1 )
 
     print e.findLocalCoord([1., 1.])
     print e.findGlobalCoord(e.findLocalCoord([10., 21.]))
-    print e.findLocalCoord(e.findGlobalCoord([0., -1.]))
-    print e.containsPoint([0., 2.], accuracy=0.01)
 
-    print e.findGlobalCoord([-0., 0.])
+    import pylab as P
+    P.plot(e.nodcoord[:,0], e.nodcoord[:,1], 'b-o')
+    P.plot(e.nodcoord[[0,2],0], e.nodcoord[[0,2],1], 'b-o')
 
-    nodvar = e.nodcoord.transpose()
+    pos = e.findGlobalCoord([-0.1,0.5])
+    P.plot([pos[0]], [pos[1]], 'ro')
+    for i, c in enumerate(e.nodcoord):
+        P.text(c[0], c[1], i+1)
+    P.show()
+
+
+#     import ShapeFunctions
+#     sh = ShapeFunctions.shapeFunctions['Quad4']()
+#     nodes = [1, 2, 3, 4]
+#     #nodcoord = N.array(([0,0], [2,0], [3,2], [0,2]),dtype=N.float_)
+#     nodcoord = N.array(([0.2,0.], [10.,0.], [1,2], [0,3.]),dtype=N.float_)
+#     e = Element( nodes, sh, nodcoord, 1 )
+
+#     print e.findLocalCoord([1., 1.])
+#     print e.findGlobalCoord(e.findLocalCoord([10., 21.]))
+#     print e.findLocalCoord(e.findGlobalCoord([0., -1.]))
+#     print e.containsPoint([0., 2.], accuracy=0.01)
+
+#     print e.findGlobalCoord([-0., 0.])
+
+#     nodvar = e.nodcoord.transpose()
     
-    print '---------'
-    print e.mapNodalVar(nodvar,deriv=True)
+#     print '---------'
+#     print e.mapNodalVar(nodvar,deriv=True)

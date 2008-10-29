@@ -144,16 +144,102 @@ class LibmeshFile(object):
             bcond.shape = (nbcond, 3)
             self.bcond = bcond
 
+    def readMesh(self, filename):
+        """read the mesh of the new Libmesh file format
+        """
+
+        ifile = file(filename)
+        filetype = ifile.readline()
+
+        # check whether this is the new format
+        if not filetype.startswith('libMesh'):
+            print 'Filetype %s not supported' % filetype
+
+        def readVar():
+            return ifile.readline().split()[0]
+        
+        nelem    = int(readVar())
+        nnodes   = int(readVar())
+        bc_file  = readVar()
+        sid_file = readVar()
+        pid_file = readVar()
+        pl_file  = readVar()
+
+        print nelem, nnodes
+        
+        elecount  = 0
+        nodecount = 0
+
+        # read connectivity
+        while elecount < nelem:
+            nelem_level = int(readVar())
+            print nelem_level
+            for n in range(nelem_level):
+                cc = ifile.readline().split()
+                self.model.setElement(elecount, self.shapeFunctionDict[cc[0]], map(int, cc[1:]))
+                elecount += 1
+
+        # read nodes
+        for n in range(nnodes):
+            cc = map(float, ifile.readline().split())
+            self.model.setCoordinate(nodecount, cc)
+            nodecount += 1
+
+        nbc = int(readVar())
+        bcond = []
+        for n in range(nbc):
+            bcond.append(map(int, ifile.readline().split()))
+        self.bcond = N.array(bcond)
+
+        # finally update the model
+        self.model.update()
+
+
+    def readResults(self, filename):
+        """read the results of the new Libmesh file format
+        """
+
+        ifile = file(filename)
+        filetype = ifile.readline()
+
+        # check whether this is the new format
+        if not filetype.startswith('libMesh'):
+            print 'Filetype %s not supported' % filetype
+
+        def readVar():
+            return ifile.readline().split()[0]
+        
+        NodVarInfo = []
+
+        nodvar = {}
+        neqs  = int(readVar())
+        for neq in range(neqs):
+            eqname = readVar()
+            eqtype = readVar()
+            nvar   = int(readVar())
+            for nv in range(nvar):
+                varname = readVar()
+                varord  = readVar()
+                varfam  = readVar()
+                NodVarInfo.append(varname)
+                nodvar[varname] = None
+            nvect = readVar()
+        self.model.setNodVarInfo(NodVarInfo)
+        
+        for neq in range(neqs):
+            nvect = int(readVar())
+            var = N.fromfile(ifile,'f',nvect, ' ')
+            print len (var)
+            readVar()  # read the comment
 
     def readFileASCII(self, filename):
         """Parse an ASCII input file
+        This is for the old (legacy) files
+        use readMesh and readResults for the new files
         """
+        # read the header
 
         lines = file(filename).readlines()
-        # remove empty lines
-        lines = [line for line in lines if len(line) > 2]
-        
-        # read the header
         self.fileType, self.versionInfo = lines[0].split()
         nelem      = int(lines[1].split()[0])      # number of elements
         nnodes     = int(lines[2].split()[0])      # number of nodes
@@ -162,6 +248,7 @@ class LibmeshFile(object):
         elemtypes  = lines[7].split()[:elemblocks] # Element types in each block.
         nlevels    = len(lines[8].split('#')[0].split())/elemblocks
         neleblock  = map( int, lines[8].split()[:elemblocks]) # Num. of elements in each block.
+
         if not lines[10].startswith('Title String'):
             self.model.name = lines[10][:-1].strip()
 
@@ -379,18 +466,21 @@ if __name__ == '__main__':
 
 #     mf.writeFile('/home/tinu/projects/libmesh/ex2/a2.xda', bcond = bc)
 
-    mf.readFile('/home/tinu/projects/libmesh/ex2/a2.xda')
-    mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xda', bcond = mf.bcond)
-    #mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xdr')
-    mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xdr', bcond = mf.bcond)
+    mf.readMesh('/scratch/tinu/fismo/last_mesh.xda')
+    mf.readResults('/scratch/tinu/fismo/last_solution.xda')
 
-    ndata = {1: [1.,99.],
-             2: [2., 101.]}
-    edata = {10: [10.],
-             20: [20., 101.],
-             3: [30., 101., 33333.],
-             }
-    mf.writeDataASCII('/home/tinu/projects/libmesh/ex2/a3.xta', ndata = ndata, edata=edata)
+#     mf.readFile('/home/tinu/projects/libmesh/ex2/a2.xda')
+#     mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xda', bcond = mf.bcond)
+    #mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xdr')
+#     mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xdr', bcond = mf.bcond)
+
+#     ndata = {1: [1.,99.],
+#              2: [2., 101.]}
+#     edata = {10: [10.],
+#              20: [20., 101.],
+#              3: [30., 101., 33333.],
+#              }
+#     mf.writeDataASCII('/home/tinu/projects/libmesh/ex2/a3.xta', ndata = ndata, edata=edata)
 #     m2 = feval.FEval.FEModel()
 #     mf2 = LibmeshFile(m2)
 #     mf2.readFile('/home/tinu/projects/libmesh/ex2/a2.xdr')

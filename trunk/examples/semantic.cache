@@ -14,6 +14,7 @@
     :tags '(("sys" include nil nil [143 153]) ("feval" include nil nil [154 166]) ("feval.fecodes.gmv.GMVFile" include nil nil [167 206]) ("if" code nil nil [229 310]) ("infile1, infile2, outfile" code nil nil [311 351]) ("m1" variable nil nil [413 445]) ("m2" variable nil nil [446 478]) ("mf1" variable nil nil [503 524]) ("mf1" code nil nil [525 546]) ("mf2" variable nil nil [547 568]) ("mf2" code nil nil [569 590]) ("if" code nil nil [646 821]) ("for" code nil nil [822 934]) ("mf1" code nil nil [939 963]) ("mf1" code nil nil [964 985]) ("mf1" code nil nil [986 1007]) ("mf1" code nil nil [1008 1032]) ("mf1" code nil nil [1033 1055]) ("mf1" code nil nil [1057 1079]))
     :file "gmvdiff.py"
     :pointmax 1081
+    :unmatched-syntax 'nil
     )
    (semanticdb-table "marc2fem.py"
     :major-mode 'python-mode
