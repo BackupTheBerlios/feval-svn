@@ -194,7 +194,7 @@ class FEModel(ModelData):
             # if new element is within the model
             # test for element ping-pong loop
             if ee != None and e_old != None:
-                print ee.name, e_old.name
+                print 'ping-pong: ', ee.name, e_old.name
             if ee and ee != e_old:
                 lc = ee.findLocalCoord(coord, self.accuracy)
                 e_old = e

@@ -67,7 +67,7 @@ import scipy.optimize
 #     raise ImportError
 
 def minimize(element, globalcoord, accuracy=1.49012e-8):
-    if len(globalcoord) == element.shape.dim:
+    if N.asarray(globalcoord) == element.shape.dim:
         retval = scipy.optimize.fsolve(element.calcDev, element.lcoord,
                                            full_output=1, \
                                            #fprime = element.calcDDev, \
