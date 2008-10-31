@@ -484,7 +484,7 @@ class FEModel(ModelData):
             #             pt = point + dist*dir
             return None
 
-        acc = 10.0
+        acc = 1.0
         while acc > accuracy:
             e = self.findElement(point)
             if not e:
@@ -517,7 +517,6 @@ class FEModel(ModelData):
                 e.lcoord = lcoord
                 fact = max(2.5, max(lc)/2.5)
                 acc = acc/fact  # 2.5 seems to be quite efficient
-
         # reset the tolerances
         self.elem_tol, self.elem_btol = elem_tol, elem_btol
 
