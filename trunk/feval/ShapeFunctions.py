@@ -159,12 +159,21 @@ class ShapeFunction_Tri3(ShapeFunctionPrototype):
                             [-1.,  1.],
                             [ 1.,  1.] ])*gaussDist
     
+#     def calcShape(self, lcoord):
+#         x, y = lcoord
+#         return N.array([
+#             1.-x-y,
+#             x,
+#             y ])
     def calcShape(self, lcoord):
         x, y = lcoord
+        x = 0.5*(x+1)
+        y = 0.5*(y+1)
         return N.array([
             1.-x-y,
             x,
             y ])
+        # x [0,1] -> 0.5*(x+1) [-1,1]
 
     def calcShapeDeriv(self, lcoord):
         x, y = lcoord

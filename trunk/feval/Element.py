@@ -178,8 +178,8 @@ class Element:
         coordinates
         """
         #lcoord = minimize( self, globalcoord[:self.shape.dim], accuracy )
-        lcoord = minimize( self, globalcoord, accuracy )
-        return (N.absolute(lcoord) <= 1.+accuracy).all()
+        self.lcoord = minimize( self, globalcoord, accuracy )
+        return (N.absolute(self.lcoord) <= 1.+accuracy).all()
 
     def setLocalCoord(self, lcoord):
         """set the local coorinate to |lcoord|"""
