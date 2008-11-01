@@ -177,12 +177,12 @@ class ShapeFunction_Tri3(ShapeFunctionPrototype):
 
     def calcShapeDeriv(self, lcoord):
         x, y = lcoord
-        self.df[0,0] = -1.0
-        self.df[0,1] =	1.0
+        self.df[0,0] = -0.5
+        self.df[0,1] =	0.5
         self.df[0,2] =	0.
-        self.df[1,0] = -1.0
+        self.df[1,0] = -0.5
         self.df[1,1] =  0.
-        self.df[1,2] =	1.0
+        self.df[1,2] =	0.5
         return self.df
 
     def nextPattern(self, lcoord):
