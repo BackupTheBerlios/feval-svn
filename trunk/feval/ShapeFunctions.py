@@ -118,7 +118,7 @@ class ShapeFunction_Line2(ShapeFunctionPrototype):
         return N.array([ -0.5, 0.5 ])
 
     def nextPattern(self, lcoord):
-        x = lcoord * 1.000001
+        x = lcoord * 1.01
         if   x >  1: return [1]
         elif x < -1: return [0]
         else:        return None
@@ -186,7 +186,7 @@ class ShapeFunction_Tri3(ShapeFunctionPrototype):
         return self.df
 
     def nextPattern(self, lcoord):
-        x,y = lcoord / max(N.absolute(lcoord)) * 1.000001
+        x,y = lcoord / max(N.absolute(lcoord)) * 1.01
         if   x+y > 1: return [1,2]
         elif y < 0:   return [0,1]
         elif x < 0:   return [2,0]
@@ -245,7 +245,7 @@ class ShapeFunction_Quad4(ShapeFunctionPrototype):
             [ -1.0+x, -1.0-x, 1.0+x, 1.0-x ]])
 
     def nextPattern(self, lcoord):
-        x,y = lcoord / max(N.absolute(lcoord)) * 1.000001
+        x,y = lcoord / max(N.absolute(lcoord)) * 1.01
         if   x >  1: return [1,2]
         elif x < -1: return [3,0]
         elif y >  1: return [2,3]
@@ -349,7 +349,7 @@ class ShapeFunction_Quad8(ShapeFunctionPrototype):
             (-y+xy)*4.]])
 	
     def nextPattern(self, lcoord):
-        x,y = lcoord / max(N.absolute(lcoord)) * 1.000001
+        x,y = lcoord / max(N.absolute(lcoord)) * 1.01
         if   x >  1: return [1,2]
         elif x < -1: return [3,0]
         elif y >  1: return [2,3]
@@ -479,7 +479,7 @@ class ShapeFunction_Hex8(ShapeFunctionPrototype):
         return self.df
     
     def nextPattern(self, lcoord):
-        x,y,z = lcoord / max(N.absolute(lcoord)) * 1.000001
+        x,y,z = lcoord / max(N.absolute(lcoord)) * 1.01
         if   x >  1: return self.sidenodes[2] #[1,2,6,5]
         elif x < -1: return self.sidenodes[4] #[0,4,7,3]
         elif y >  1: return self.sidenodes[3] #[2,3,7,6]
@@ -687,7 +687,7 @@ class ShapeFunction_Hex20(ShapeFunctionPrototype):
         return self.df
 
     def nextPattern(self, lcoord):
-        x,y,z = lcoord / max(N.absolute(lcoord)) * 1.000001
+        x,y,z = lcoord / max(N.absolute(lcoord)) * 1.01
         if   x >  1: return [1,2,6,5]
         elif x < -1: return [0,3,7,4]
         elif y >  1: return [2,3,7,6]
@@ -875,7 +875,7 @@ class ShapeFunction_Hex27(ShapeFunctionPrototype):
 #         return self.df
 
     def nextPattern(self, lcoord):
-        x,y,z = lcoord / max(N.absolute(lcoord)) * 1.000001
+        x,y,z = lcoord / max(N.absolute(lcoord)) * 1.01
         if   x >  1: return [1,2,6,5]
         elif x < -1: return [0,3,7,4]
         elif y >  1: return [2,3,7,6]
