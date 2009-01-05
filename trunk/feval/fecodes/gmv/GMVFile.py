@@ -13,8 +13,9 @@ class GMVFile(FETextFile):
                          'hex8 8': 'Hex8',
                          'phex8 8': 'Hex8',
                          'tri 3':  'Tri3',
+                         '6tri 6':  'Tri6',
                          'quad 4': 'Quad4',
-                         'pprism6': 'Prism6',
+                         'pprism6 6': 'Prism6',
                          '8quad 8': 'Quad8',
                          'phex20 20': 'Hex20',
                          'phex27 27': 'Hex27',
@@ -28,9 +29,11 @@ class GMVFile(FETextFile):
     # the node pattern is from GMV to FEval
     nodePattern = {}
     nodePattern['Tri3']  = [0,1,2]
+    nodePattern['Tri6']  = [0,1,2,3,4,5]
     nodePattern['Quad4'] = [0,1,2,3]
     nodePattern['Tet4']  = [0,1,2,3]
     nodePattern['Quad8'] = [0,1,2,3,4,5,6,7]
+    nodePattern['Quad9'] = [0,1,2,3,4,5,6,7,8]
     nodePattern['Hex8']  = [0,1,2,3,4,5,6,7]
     nodePattern['Hex20'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15]
     nodePattern['Hex27'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15, 24,20,21,22,23, 25,26]
@@ -38,9 +41,11 @@ class GMVFile(FETextFile):
     # the inverse node pattern is from FEval to GMV
     nodePatternInv = {}
     nodePatternInv['Tri3']  = [0,1,2]
+    nodePatternInv['Tri6']  = [0,1,2,3,4,5]
     nodePatternInv['Quad4'] = [0,1,2,3]
     nodePatternInv['Tet4']  = [0,1,2,3]
     nodePatternInv['Quad8'] = [0,1,2,3,4,5,6,7]
+    nodePatternInv['Quad9'] = [0,1,2,3,4,5,6,7,8]
     nodePatternInv['Hex8']  = [0,1,2,3,4,5,6,7]
     nodePatternInv['Hex20'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15]
     nodePatternInv['Hex27'] = [0,1,2,3,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15, 21,22,23,24,20, 25,26]
@@ -99,6 +104,7 @@ class GMVFile(FETextFile):
         """Extract the nodes.
         The number of nodes is given in the first line of the input file.
         The nodes are numbered consecutively here."""
+
         nnodes = int(linelist[0].split()[1])
         coord = []
         linelist = linelist[1:]
@@ -145,6 +151,7 @@ class GMVFile(FETextFile):
         """Extract the cells of any type
         The cells are numbered consecutively with self.elemNumber"""
         elemtype = linelist[0].strip()
+        print elemtype
         nodes = map(int, linelist[1].split())
         self.elemNumber += 1
         try: 
@@ -182,6 +189,10 @@ class GMVFile(FETextFile):
         self.extract_element(linelist)
 
     def extract_tri(self, linelist):
+        """Extract the cells of type quad"""
+        self.extract_element(linelist)
+
+    def extract_6tri(self, linelist):
         """Extract the cells of type quad"""
         self.extract_element(linelist)
 
@@ -298,7 +309,7 @@ if __name__ == '__main__':
 
 
     gf = GMVFile(m)
-    gf.readFile('/home/tinu/projects/balance/model/osc_bg=0.006,T=20,ELA=1600,dELA=100,alpha=5/results/out.gmv.00000')
+    gf.readFile('/scratch/tinu/species/final/hist_bg=0.006,T=0,ELA=2700,dELA=0/results/out.gmv.00000')
 
 
 
