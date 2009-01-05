@@ -15,6 +15,7 @@ gmvinput
 endgmv
 # the different cell types have to be extracted individually
 tri
+6tri
 hex
 hex8
 phex8
