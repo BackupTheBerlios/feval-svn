@@ -269,9 +269,9 @@ class ShapeFunction_Tri6(ShapeFunctionPrototype):
 
     def nextPattern(self, lcoord):
         x,y = lcoord / max(N.absolute(lcoord)) * 1.01
-        if   x+y > 1: return [1,2]
-        elif y < 0:   return [0,1]
-        elif x < 0:   return [2,0]
+        if   x+y > 1: return [0,1]
+        elif y < 0:   return [2,0]
+        elif x < 0:   return [1,2]
         else:        return None
 
 
