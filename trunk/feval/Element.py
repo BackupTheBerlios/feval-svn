@@ -69,18 +69,18 @@ import scipy.optimize
 def minimize(element, globalcoord, accuracy=1.49012e-8):
     if len(N.asarray(globalcoord)) == element.shape.dim:
         retval = scipy.optimize.fsolve(element.calcDev, element.lcoord,
-                                           full_output=1, \
-                                           #fprime = element.calcDDev, \
-                                           args=(globalcoord,), xtol = accuracy)
+                                       full_output=1, \
+                                       #fprime = element.calcDDev, \
+                                       args=(globalcoord,), xtol = accuracy)
     # point embedded in a bigger space (2D element in 3D space)
     else:
         n1, n2, n3 = element.shape.cornernodes[:3]
         v1 = element.nodcoord[n2]-element.nodcoord[n1]
         v2 = element.nodcoord[n3]-element.nodcoord[n2]
         retval = scipy.optimize.fsolve(element.calcDevEmbedded, element.lcoord,
-                                           full_output=1, \
-                                           #fprime = element.calcDDev, \
-                                           args=(globalcoord, v1, v2), xtol = accuracy)
+                                       full_output=1, \
+                                       #fprime = element.calcDDev, \
+                                       args=(globalcoord, v1, v2), xtol = accuracy)
     return retval[0]
 
 
@@ -192,17 +192,28 @@ if __name__ == '__main__':
     nodes = [1, 2, 3]
     nodcoord = N.array(([0.,0.], [1,0.], [0.5,1]),dtype=N.float_)
     e = Element( nodes, sh, nodcoord, 1 )
+    
+    sh = ShapeFunctions.shapeFunctions['Tri6']()
+    nodes = [1, 2, 3, 4, 5, 6]
+    nodcoord = N.array(([0.,0.], [1,0.], [0.5,1],
+                        [0.5, 0], [0.7, 0.6], [0.3,0.6]),dtype=N.float_)
+    e6 = Element( nodes, sh, nodcoord, 2 )
 
-    print e.findLocalCoord([1., 1.])
-    print e.findGlobalCoord(e.findLocalCoord([10., 21.]))
+    print e.findLocalCoord([0.2, 0.2])
+    print e6.findLocalCoord([0.2, 0.2])
+
+    print '----------------------'
+
+    print e.findGlobalCoord(e.findLocalCoord([7., 21]))
+    print e6.findGlobalCoord(e6.findLocalCoord([7., 21]))
 
     import pylab as P
-    P.plot(e.nodcoord[:,0], e.nodcoord[:,1], 'b-o')
+    P.plot(e6.nodcoord[:,0], e6.nodcoord[:,1], 'b-o')
     P.plot(e.nodcoord[[0,2],0], e.nodcoord[[0,2],1], 'b-o')
 
     pos = e.findGlobalCoord([-0.1,0.5])
     P.plot([pos[0]], [pos[1]], 'ro')
-    for i, c in enumerate(e.nodcoord):
+    for i, c in enumerate(e6.nodcoord):
         P.text(c[0], c[1], i+1)
     P.show()
 

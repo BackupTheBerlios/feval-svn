@@ -247,14 +247,6 @@ class ShapeFunction_Tri6(ShapeFunctionPrototype):
             4.*zeta2*zeta0,
             4.*zeta0*zeta1,
             ])
-#         return N.array([
-#             2.*x*(x-0.5),
-#             2.*y*(y-0.5),
-#             2.*z*(z-0.5),
-#             4.*y*z,
-#             4.*z*x,
-#             4.*x*y,
-#             ])
 
     def calcShapeDeriv(self, lcoord):
         stop
