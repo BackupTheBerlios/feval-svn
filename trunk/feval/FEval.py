@@ -504,7 +504,7 @@ class FEModel(ModelData):
                 # dcoord is the half-size of the element in global coordinates
                 # i.e. 0.5*(dx, dy, ..)
                 #dcoord = N.sum(N.dot( e.shape.calcShapeDeriv(N.zeros(e.dim)), e.nodcoord))
-                dcoord = N.sqrt(N.sum((e.nodcoord[1]-e.nodcoord[0])**2))
+                dcoord = N.sqrt(N.sum((e.nodcoord[1]-e.nodcoord[0])**2))/5.
                 pt = point + acc*direction*abs(dcoord)
                 if self.verbose:
                     print 'element: ', e.name , ';  point  : ', pt
