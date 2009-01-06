@@ -233,18 +233,28 @@ class ShapeFunction_Tri6(ShapeFunctionPrototype):
     def calcShape(self, lcoord):
         xi1, xi2 = lcoord
 	    
+
         # 0.5*(x+1) [-1,1]  ->  x [0,1]
-        y = 0.5*(xi1+1.)
-        z = 0.5*(xi2+1.)
-        x = 1. - y - z
-        print x, y, z
+        zeta1 = 0.5*(xi1+1.)
+        zeta2 = 0.5*(xi2+1.)
+        zeta0 = 1. - zeta1 - zeta2
+
         return N.array([
-            2.*x*(x-0.5),
-            2.*y*(y-0.5),
-            2.*z*(z-0.5),
-            4.*x*y,
-            4.*y*z,
-            4.*z*x])
+            2.*zeta0*(zeta0-0.5),
+            2.*zeta1*(zeta1-0.5),
+            2.*zeta2*(zeta2-0.5),
+            4.*zeta1*zeta2,
+            4.*zeta2*zeta0,
+            4.*zeta0*zeta1,
+            ])
+#         return N.array([
+#             2.*x*(x-0.5),
+#             2.*y*(y-0.5),
+#             2.*z*(z-0.5),
+#             4.*y*z,
+#             4.*z*x,
+#             4.*x*y,
+#             ])
 
     def calcShapeDeriv(self, lcoord):
         stop
@@ -1084,30 +1094,46 @@ shapeFunctions = {
 if __name__ == '__main__':
 
     sh6 = ShapeFunction_Tri6()
+    sh3 = ShapeFunction_Tri3()
 
     def shape(zeta):
         zeta1, zeta2 = zeta
         zeta0 = 1. - zeta1 - zeta2
-        print zeta0, zeta1, zeta2
         return [2.*zeta0*(zeta0-0.5),
-               2.*zeta1*(zeta1-0.5),
-               2.*zeta2*(zeta2-0.5),
-               4.*zeta0*zeta1,
-               4.*zeta1*zeta2,
-               4.*zeta2*zeta0]
-
+                2.*zeta1*(zeta1-0.5),
+                2.*zeta2*(zeta2-0.5),
+                4.*zeta1*zeta2,
+                4.*zeta2*zeta0,
+                4.*zeta0*zeta1,
+                ]
 
     print shape([0.,0.])
     print sh6([-1.,-1.])
+    print sh3([-1.,-1.])
     print '----------------------'
     print shape([1.,0.])
     print sh6([1.,-1.])
+    print sh3([1.,-1.])
     print '----------------------'
     print shape([0.,1.])
     print sh6([-1.,1.])
+    print sh3([-1.,1.])
     print '----------------------'
     print shape([0.5,0.5])
     print sh6([0.,0.])
+    print sh3([0.,0.])
+    print '----------------------'
+    print shape([0.,0.5])
+    print sh6([-1.,0.])
+    print sh3([-1.,0.])
+    print '----------------------'
+    print shape([0.5,0.])
+    print sh6([0.,-1.])
+    print sh3([0.,-1.])
+    print '----------------------'
+    print shape([0.3,0.4])
+    print sh6([-0.4,-0.2])
+    print sh3([-0.4,-0.2])
 
 
 #     for n, sf in shapeFunctions.items():
