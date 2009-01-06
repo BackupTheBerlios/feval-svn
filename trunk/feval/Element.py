@@ -209,12 +209,22 @@ if __name__ == '__main__':
 
     import pylab as P
     P.plot(e6.nodcoord[:,0], e6.nodcoord[:,1], 'b-o')
-    P.plot(e.nodcoord[[0,2],0], e.nodcoord[[0,2],1], 'b-o')
+    #P.plot(e.nodcoord[[0,2],0], e.nodcoord[[0,2],1], 'b-o')
 
-    pos = e.findGlobalCoord([-0.1,0.5])
+    pos = e6.findGlobalCoord([0.7,0.4])
+    print e6.shape.nextPattern(e6.lcoord)
     P.plot([pos[0]], [pos[1]], 'ro')
-    for i, c in enumerate(e6.nodcoord):
-        P.text(c[0], c[1], i+1)
+
+    pos = e6.findGlobalCoord([0.7,-1.8])
+    print e6.shape.nextPattern(e6.lcoord)
+    P.plot([pos[0]], [pos[1]], 'mo')
+
+    pos = e6.findGlobalCoord([-1.5,0])
+    print e6.shape.nextPattern(e6.lcoord)
+    P.plot([pos[0]], [pos[1]], 'go')
+
+#     for i, c in enumerate(e6.nodcoord):
+#         P.text(c[0], c[1], i+1)
     P.show()
 
 
