@@ -151,7 +151,6 @@ class GMVFile(FETextFile):
         """Extract the cells of any type
         The cells are numbered consecutively with self.elemNumber"""
         elemtype = linelist[0].strip()
-        print elemtype
         nodes = map(int, linelist[1].split())
         self.elemNumber += 1
         try: 
