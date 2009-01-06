@@ -62,6 +62,9 @@ class ShapeFunctionPrototype:
         self.f  = N.zeros(self.nnodes, N.float_)
         self.df = N.zeros( (self.dim, self.nnodes), N.float_)
 
+    def __call__(self, args):
+        return self.calcShape(args)
+
     # must be overrridden by the shape function
     def calcShape(self, lcoord):
         return None
@@ -167,15 +170,84 @@ class ShapeFunction_Tri3(ShapeFunctionPrototype):
 #             y ])
     def calcShape(self, lcoord):
         x, y = lcoord
+        # 0.5*(x+1) [-1,1]  ->  x [0,1]
         x = 0.5*(x+1)
         y = 0.5*(y+1)
         return N.array([
             1.-x-y,
             x,
             y ])
-        # x [0,1] -> 0.5*(x+1) [-1,1]
 
     def calcShapeDeriv(self, lcoord):
+        x, y = lcoord
+        self.df[0,0] = -0.5
+        self.df[0,1] =	0.5
+        self.df[0,2] =	0.
+        self.df[1,0] = -0.5
+        self.df[1,1] =  0.
+        self.df[1,2] =	0.5
+        return self.df
+
+    def nextPattern(self, lcoord):
+        x,y = lcoord / max(N.absolute(lcoord)) * 1.01
+        if   x+y > 1: return [1,2]
+        elif y < 0:   return [0,1]
+        elif x < 0:   return [2,0]
+        else:        return None
+
+
+class ShapeFunction_Tri6(ShapeFunctionPrototype):
+    """Element function for linear element defined in MARC Manual B2.4-1, 
+    Taylor&Hughes (1981), p. 49
+
+        2  
+       / \  
+      5   4 
+     /     \
+    0---3---1
+    """
+
+    name = 'Tri6'
+    dim, nnodes = 2, 6
+    cornernodes = N.array([0,1,2])
+    nsides      = 3
+    sidetype    = 'Line3'
+    sidenodes   = N.array(
+                  [[0,3,1],
+                   [1,4,2],
+                   [2,5,0],
+                   ])
+    nextnodes   = N.array(
+                  [[1,2],
+                   [0,2],
+                   [0,1],
+                   ])
+    #triangles   = N.array([[0,1,2]])
+    #!!!! worng, this is still from quads
+    gaussDist = 0.577350269189626  # 1./N.sqrt(3)
+    lcoordGauss = N.array([ [-1., -1.],
+                            [ 1., -1.],
+                            [-1.,  1.],
+                            [ 1.,  1.] ])*gaussDist
+    
+    def calcShape(self, lcoord):
+        xi1, xi2 = lcoord
+	    
+        # 0.5*(x+1) [-1,1]  ->  x [0,1]
+        y = 0.5*(xi1+1.)
+        z = 0.5*(xi2+1.)
+        x = 1. - y - z
+        print x, y, z
+        return N.array([
+            2.*x*(x-0.5),
+            2.*y*(y-0.5),
+            2.*z*(z-0.5),
+            4.*x*y,
+            4.*y*z,
+            4.*z*x])
+
+    def calcShapeDeriv(self, lcoord):
+        stop
         x, y = lcoord
         self.df[0,0] = -0.5
         self.df[0,1] =	0.5
@@ -355,6 +427,118 @@ class ShapeFunction_Quad8(ShapeFunctionPrototype):
         elif y >  1: return [2,3]
         elif y < -1: return [0,1]
         else:        return None
+
+
+class ShapeFunction_Quad9(ShapeFunctionPrototype):
+    """Element function for quadratic element defined in MARC Manual B2.7-1
+    Taylor&Hughes (1981), p. 50
+    Element nodes numbering is the same as for MARC
+
+    3-----6-----2
+    |(5) (6) (7)|
+    |           |
+    7(3)  8  (4)5
+    |           |
+    |(0) (1) (2)|
+    0-----4-----1
+
+
+    """
+
+    name = 'Quad9'
+    dim, nnodes = 2, 9
+    cornernodes = [0,1,2,3]
+    nsides      = 4
+    sidetype    = 'Line3'
+    sidenodes   = N.array(
+                  [[0,4,1],
+                   [1,5,2],
+                   [2,6,3],
+                   [3,7,0],
+                   ])
+    nextnodes   = N.array(
+                  [[1,3],
+                   [0,2],
+                   [1,3],
+                   [0,2],
+                   ])
+    triangles   = N.array([[7,0,4],
+                           [4,1,5],
+                           [5,2,6],
+                           [6,3,7],
+                           [7,4,5],
+                           [5,6,7]])
+    gaussDist = 0.774596669241483  # = N.sqrt(0.6)
+    lcoordGauss = N.array([ [-1., -1.],
+                            [ 0., -1.],
+                            [ 1., -1.],
+                            [-1.,  0.],
+                            [ 1.,  0.],
+                            [-1.,  1.],
+                            [ 0.,  1.],
+                            [ 1.,  1.] ])*gaussDist
+
+    def calcShape(self, lcoord):
+        print "not implemented correctly"
+        stop
+
+        
+        x, y = lcoord
+        xx, yy, xy = x*x, y*y, x*y
+        xxy, xyy = xx*y, x*yy
+
+        return 0.25*N.array([
+        # the corner nodes
+            (-1.0+xy+xx+yy-xxy-xyy),
+            (-1.0-xy+xx+yy-xxy+xyy),
+            (-1.0+xy+xx+yy+xxy+xyy),
+            (-1.0-xy+xx+yy+xxy-xyy),
+        # the mid-side nodes
+            2.*(1.0-y-xx+xxy),
+            2*(1.0+x-yy-xyy),
+            2*(1.0+y-xx-xxy),
+            2*(1.0-x-yy+xyy)])
+		
+    def calcShapeDeriv(self, lcoord):
+        print "not implemented correctly"
+        stop
+        x, y = lcoord
+        xx, yy, xy = x*x, y*y, x*y
+        xxy, xyy, xy2 = xx*y, x*yy, xy*xy
+        
+        return 0.25*N.array([
+            [
+        # the corner nodes
+            y+xx-xy2-yy,
+            y+xx-xy2+yy,
+            y+xx+xy2+yy,
+            y+xx+xy2-yy,
+        # the mid-side nodes
+            (-x+xy)*4.,
+            (1.0-yy)*2.,
+            (-x-xy)*4.,
+            (-1.0+yy)*2.,
+            ],[
+        # the corner nodes
+            x+yy-xx-xy2,
+            x+yy-xx+xy2,
+            x+yy+xx+xy2,
+            x+yy+xx-xy2,
+        # the mid-side nodes
+            (-1.0+xx)*2.,
+            (-y-xy)*4.,
+            (1.0-xx)*2.,
+            (-y+xy)*4.]])
+	
+    def nextPattern(self, lcoord):
+        x,y = lcoord / max(N.absolute(lcoord)) * 1.01
+        if   x >  1: return [1,2]
+        elif x < -1: return [3,0]
+        elif y >  1: return [2,3]
+        elif y < -1: return [0,1]
+        else:        return None
+
+
 
 class ShapeFunction_Hex8(ShapeFunctionPrototype):
     """Element function for linear element defined in MARC Manual B2.4-1,
@@ -888,8 +1072,10 @@ class ShapeFunction_Hex27(ShapeFunctionPrototype):
 shapeFunctions = {
     'Line2': ShapeFunction_Line2,
     'Tri3':  ShapeFunction_Tri3,
+    'Tri6':  ShapeFunction_Tri6,
     'Quad4': ShapeFunction_Quad4,
     'Quad8': ShapeFunction_Quad8,
+    'Quad9': ShapeFunction_Quad9,
     'Hex8' : ShapeFunction_Hex8, 
     'Hex20': ShapeFunction_Hex20,
     'Hex27': ShapeFunction_Hex27
@@ -897,9 +1083,36 @@ shapeFunctions = {
 
 if __name__ == '__main__':
 
-    for n, sf in shapeFunctions.items():
-        print '===== %s =====' % n
-        s = sf()
+    sh6 = ShapeFunction_Tri6()
+
+    def shape(zeta):
+        zeta1, zeta2 = zeta
+        zeta0 = 1. - zeta1 - zeta2
+        print zeta0, zeta1, zeta2
+        return [2.*zeta0*(zeta0-0.5),
+               2.*zeta1*(zeta1-0.5),
+               2.*zeta2*(zeta2-0.5),
+               4.*zeta0*zeta1,
+               4.*zeta1*zeta2,
+               4.*zeta2*zeta0]
+
+
+    print shape([0.,0.])
+    print sh6([-1.,-1.])
+    print '----------------------'
+    print shape([1.,0.])
+    print sh6([1.,-1.])
+    print '----------------------'
+    print shape([0.,1.])
+    print sh6([-1.,1.])
+    print '----------------------'
+    print shape([0.5,0.5])
+    print sh6([0.,0.])
+
+
+#     for n, sf in shapeFunctions.items():
+#         print '===== %s =====' % n
+#         s = sf()
 #         s.calcGauss()
 #         print s.gaussShapeInv
     
