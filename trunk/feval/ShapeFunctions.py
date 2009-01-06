@@ -232,28 +232,36 @@ class ShapeFunction_Tri6(ShapeFunctionPrototype):
     
     def calcShape(self, lcoord):
         xi1, xi2 = lcoord
-	    
+
+        # 0.5*(x+1) [-1,1]  ->  x [0,1]
+        y = 0.5*(xi1+1.)
+        z = 0.5*(xi2+1.)
+        x = 1. - y - z
+
+        return N.array([
+            2.*x*(x-0.5),
+            2.*y*(y-0.5),
+            2.*z*(z-0.5),
+            4.*y*z,
+            4.*z*x,
+            4.*x*y,
+            ])
+
+    def calcShapeDeriv(self, lcoord):
+        stop
+        xi1, xi2 = lcoord
 
         # 0.5*(x+1) [-1,1]  ->  x [0,1]
         zeta1 = 0.5*(xi1+1.)
         zeta2 = 0.5*(xi2+1.)
         zeta0 = 1. - zeta1 - zeta2
 
-        return N.array([
-            2.*zeta0*(zeta0-0.5),
-            2.*zeta1*(zeta1-0.5),
-            2.*zeta2*(zeta2-0.5),
-            4.*zeta1*zeta2,
-            4.*zeta2*zeta0,
-            4.*zeta0*zeta1,
-            ])
-
-    def calcShapeDeriv(self, lcoord):
-        stop
-        x, y = lcoord
-        self.df[0,0] = -0.5
-        self.df[0,1] =	0.5
-        self.df[0,2] =	0.
+        self.df[0,0] = 4.*zeta0-1.
+        self.df[0,1] = 4.*zeta1-1.
+        self.df[0,2] = 4.*zeta2-1.
+        self.df[0,3] = 4.*zeta2-1.
+        self.df[0,4] = 4.*zeta2-1.
+        self.df[0,5] = 4.*zeta2-1.
         self.df[1,0] = -0.5
         self.df[1,1] =  0.
         self.df[1,2] =	0.5
