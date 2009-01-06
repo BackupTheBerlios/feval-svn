@@ -119,7 +119,8 @@ class FEModel(ModelData):
         Reset the element variables (this is useful when a new
         timestep is read)""" 
         # reset all cached results
-        self.elementCache  ={None: None}  # dummy entry
+        self.elementCache  = {None: None}  # dummy entry
+        self.shapeCache    = {None: None}  # dummy entry
         self.nodeIndex     = {}
         self.boundaryElems = {}
         self.boundaryNodes = {}
@@ -277,7 +278,11 @@ class FEModel(ModelData):
             pass
         conn = self.Conn[elename]
         nodes = conn[1]
-        sh = ShapeFunctions.shapeFunctions[conn[0]]()
+        try:
+            sh = self.shapeCache[conn[0]]
+        except:
+            sh = ShapeFunctions.shapeFunctions[conn[0]]()
+            self.shapeCache[conn[0]] = sh
 
         # collect the nodal coordinates
         nodcoord = N.array([self.Coord[n] for n in nodes])
@@ -417,7 +422,8 @@ class FEModel(ModelData):
         list of all boundary sides
         """
         # use a dictionary (or a Set) to keep the boundary elements unique
-        if not self.boundaryElems or not recalc:
+        if not self.boundaryElems or recalc == True:
+            print 'calculating boundary elements'
             belems = {}
             if side != None:
                 for elename in self.getElementNames():
@@ -441,7 +447,9 @@ class FEModel(ModelData):
         |dimension as the model.  """
 
         #direction = direction / N.sqrt(N.dot(direction,direction))
-
+        point = N.asarray(point)
+        direction = N.asarray(direction)
+        
         try:
             bmodel = self.bmodel_tri
         except:
@@ -626,7 +634,7 @@ class FEModel(ModelData):
                                           nodes[shape.sidenodes[s]])
                     for c in nodes[shape.sidenodes[s]]:
                         bmodel.setCoordinate(c, self.getCoordinate(c))
-        bmodel.renumberElements()
+        #bmodel.renumberElements()
         bmodel.update()
         return bmodel
 
