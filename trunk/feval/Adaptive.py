@@ -254,7 +254,7 @@ def subdivideHex2(model, elem, globalrefinenodes):
 
     # TODO: Maybe a better strategy to handle the cases of two and three nodes
     # if the number is not explicitly given, use full refinement
-    if not n_refinenodes in [1,2,4,8]:
+    if not n_refinenodes in [1,2,8]:
         n_refinenodes = 8
 
     # The new nodes for refinement are given as points on a grid of 64
@@ -298,79 +298,17 @@ def subdivideHex2(model, elem, globalrefinenodes):
             # this means that two edges are refined, not a side
             n_refinenodes = 8
 
-    elif n_refinenodes == 4:
-        stop
-        corneridx = [
-                      [ 0,  1,  5,  4, 16, 17, 21, 20],
-                      [ 1,  2,  6,  5, 17, 18, 22, 21],
-                      [ 2,  3,  7,  6, 18, 19, 23, 22],
-                      [ 4,  5,  9,  8, 20, 21, 25, 24],
-                      [ 5,  6, 10,  9, 21, 22, 26, 25],
-                      [ 6,  7, 11, 10, 22, 23, 27, 26],
-                      [ 8,  9, 13, 12, 24, 25, 29, 28],
-                      [ 9, 10, 14, 13, 25, 26, 30, 29],
-                      [10, 11, 15, 14, 26, 27, 31, 30],
-                      [17, 18, 22, 21, 33, 34, 72, 71],
-                      [22, 23, 27, 26, 72, 39, 43, 73],
-                      [25, 26, 30, 29, 74, 73, 46, 45],
-                      [20, 21, 25, 24, 36, 71, 74, 40],
-                      [21, 22, 26, 25, 71, 72, 73, 74],
-                      [16, 17, 21, 20, 48, 33, 71, 36],
-                      [18, 19, 23, 22, 34, 51, 39, 72],
-                      [26, 27, 31, 30, 73, 43, 63, 46],
-                      [24, 25, 29, 28, 40, 74, 45, 60],
-                      [71, 72, 73, 74, 33, 34, 46, 45],
-                      [36, 71, 74, 40, 48, 33, 45, 60],
-                      [72, 39, 43, 73, 34, 51, 63, 46],
-                      [33, 34, 46, 45, 48, 51, 63, 60],
-                    ]
-        edgeindex = {
-                      (0, 1, 2, 3): 0,    # unten
-                      (4, 5, 6, 7): 5,    # oben
-                      (0, 1, 4, 5): 8,    # !!!!!!!! falsche Transfromation
-                      (1, 2, 6, 5): 9,    # rechts
-                      (2, 3, 6, 7): 10,   # hinten
-                      (0, 3, 4, 7): 11,   # links
-                     }
-        refinenodes.sort()
-        if edgeindex.has_key(tuple(refinenodes)):
-            refinenode = edgeindex[tuple(refinenodes)]
-        else:
-            # if the specified edges dont exist refine the whole element
-            # this means that two edges are refined, not a side
-            n_refinenodes = 8
-
     # refine around all nodes (i.e. refine the whole element)
     elif n_refinenodes == 8:
-        stop
         corneridx = [
-                      [ 0,  1,  5,  4, 16, 17, 21, 20],
-                      [ 1,  2,  6,  5, 17, 18, 22, 21],
-                      [ 2,  3,  7,  6, 18, 19, 23, 22],
-                      [ 4,  5,  9,  8, 20, 21, 25, 24],
-                      [ 5,  6, 10,  9, 21, 22, 26, 25],
-                      [ 6,  7, 11, 10, 22, 23, 27, 26],
-                      [ 8,  9, 13, 12, 24, 25, 29, 28],
-                      [ 9, 10, 14, 13, 25, 26, 30, 29],
-                      [10, 11, 15, 14, 26, 27, 31, 30],
-                      [16, 17, 21, 20, 32, 33, 37, 36],
-                      [17, 18, 22, 21, 33, 34, 38, 37],
-                      [18, 19, 23, 22, 34, 35, 39, 38],
-                      [20, 21, 25, 24, 36, 37, 41, 40],
-                      [21, 22, 26, 25, 37, 38, 42, 41],
-                      [22, 23, 27, 26, 38, 39, 43, 42],
-                      [24, 25, 29, 28, 40, 41, 45, 44],
-                      [25, 26, 30, 29, 41, 42, 46, 45],
-                      [26, 27, 31, 30, 42, 43, 47, 46],
-                      [32, 33, 37, 36, 48, 49, 53, 52],
-                      [33, 34, 38, 37, 49, 50, 54, 53],
-                      [34, 35, 39, 38, 50, 51, 55, 54],
-                      [36, 37, 41, 40, 52, 53, 57, 56],
-                      [37, 38, 42, 41, 53, 54, 58, 57],
-                      [38, 39, 43, 42, 54, 55, 59, 58],
-                      [40, 41, 45, 44, 56, 57, 61, 60],
-                      [41, 42, 46, 45, 57, 58, 62, 61],
-                      [42, 43, 47, 46, 58, 59, 63, 62],
+                      [ 0,  1,  4,  3,  9, 10, 13, 12],
+                      [ 1,  2,  5,  4, 10, 11, 14, 13],
+                      [ 3,  4,  7,  6, 12, 13, 16, 15],
+                      [ 4,  5,  8,  7, 13, 14, 17, 16],
+                      [ 9, 10, 13, 12, 18, 19, 22, 21],
+                      [10, 11, 14, 13, 19, 20, 23, 22],
+                      [13, 14, 17, 16, 22, 23, 26, 25],
+                      [12, 13, 16, 15, 21, 22, 25, 24],
                     ]
 
     # change the order of the corner nodes of the element according to the
@@ -433,10 +371,9 @@ if __name__ == '__main__':
 #     #e =  m.findClosestElement(N.asarray([0., 1., 0.5]))
 #     e = m.getElement(1)
 
-#     #subdivideHex(m, e, [0,1,2,3, 4, 5, 6, 7])
-#     #subdivideHex(m, e, [0,4,1,5])
-#     #subdivideHex(m, e, [7], fact=1.)
-#     subdivideHex2(m, e, [1,2])
+#     subdivideHex2(m, e, [1,2,3])
+#     #subdivideHex2(m, e, [1,2])
+#     #subdivideHex2(m, e, [1])
 
 #     m.renumberNodes()
 #     m.renumberElements()
@@ -447,6 +384,8 @@ if __name__ == '__main__':
 #     gf.setWrite('elm')
 #     gf.writeFile('X.gmsh')
 
+#     stop
+    
     import feval.Hexmesh
     print 'creating/reading file'
 
@@ -460,13 +399,12 @@ if __name__ == '__main__':
     m.renumberElements()
     
     refinenode = 323
-    refinenodes = [250,35]
+    refinenodes = [250,258,156]
     refineelems = set()
     for refinenode in refinenodes:
         refineelems.update(m.nodeIndex[refinenode])
-        #elems = m.nodeIndex[refinenodes[0]]
     for ele in refineelems:
-        subdivideHex3(m, m.getElement(ele), refinenodes)
+        subdivideHex2(m, m.getElement(ele), refinenodes)
 
     m.sweepNodes()
     m.renumberNodes()
