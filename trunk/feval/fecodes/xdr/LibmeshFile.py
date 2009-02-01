@@ -91,6 +91,7 @@ class LibmeshFile(object):
         for n, c in enumerate(coord):
             self.model.setCoordinate(n, c)
 
+        
         # read the boundary conditions
         if nbcond > 0:
             bcond = N.array(struct.unpack('!%si'%(3*nbcond), f.read(4*3*nnodes)))
@@ -185,11 +186,14 @@ class LibmeshFile(object):
             self.model.setCoordinate(nodecount, cc)
             nodecount += 1
 
-        nbc = int(readVar())
-        bcond = []
-        for n in range(nbc):
-            bcond.append(map(int, ifile.readline().split()))
-        self.bcond = N.array(bcond)
+        if bc_file == '.':
+            nbc = int(readVar())
+            bcond = dict()
+            for n in range(nbc):
+                w = map(int, ifile.readline().split())
+                if len(w) > 2:
+                    bcond[w[0]] = w[1:]
+            self.model.bcond = bcond
 
         # finally update the model
         self.model.update()
@@ -294,14 +298,41 @@ class LibmeshFile(object):
             self.bcond = N.array(bcond)
 
 
-
     def writeFileASCII(self, filename, bcond = None):
+        """Write a Libmesh xda file"""
+
+        outfile = file(filename,'w')
+
+        # only write refinement level 0 elements for now
+        outfile.write('libMesh-0.7.0+\n')
+        outfile.write('%d\t # number of elements\n' % len(self.model.Conn) )
+        outfile.write('%d\t # number of nodes\n'    % len(self.model.Coord) )
+        outfile.write('n/a\t # boundary condition specification file\n')
+        outfile.write('n/a\t # subdomain id specification file\n')
+        outfile.write('n/a\t # processor id specification file\n')
+        outfile.write('n/a\t # p-level specification file\n')
+        outfile.write('%d\t # n_elem at level 0, [ type (n0 ... nN-1) ]\n' % len(self.model.Conn) )
+        
+
+        for key in sorted(self.model.Conn.keys()):
+            t, nodes = self.model.Conn[key]
+            outfile.write('%s ' % self.invShapeFunctionDict[t] +
+                          ' '.join([str(n) for n in nodes])+'\n')
+        for key in sorted(self.model.Coord.keys()):
+            outfile.write('%.17e %.17e %.17e\n' % tuple(self.model.Coord[key]))
+
+        outfile.close()
+
+    def writeFileASCIIold(self, filename, bcond = None):
         """Write a Libmesh xda file
         |bcond| should be a list of lists
         [[e1, s1, b1],
          [e2, s2, b2]]
         where e* are element names, s* side ids, and b* boundary condition ids
         """
+        print " deprecated???"
+        stop
+
         lines = []
 
         # go through all elements and see which ones have the same type
@@ -362,6 +393,9 @@ class LibmeshFile(object):
     def writeFileBinary(self, filename, bcond=None):
         """write the binary file
         """
+        print " deprecated???"
+        stop
+        
         # go through all elements and see which ones have the same type
         # build a dict of elements
         weight = 0 # total weight
@@ -466,8 +500,12 @@ if __name__ == '__main__':
 
 #     mf.writeFile('/home/tinu/projects/libmesh/ex2/a2.xda', bcond = bc)
 
-    mf.readMesh('/scratch/tinu/fismo/last_mesh.xda')
-    mf.readResults('/scratch/tinu/fismo/last_solution.xda')
+    #mf.readMesh('/scratch/tinu/fismo/last_mesh.xda')
+    #mf.readMesh('/home/tinu/fismo/trunk/mesh/SmallTongue_2nd.xda')
+    mf.readMesh('/home/tinu/projects/amodel/results/mesh2000_mesh.xda')
+    #mf.writeFile('/home/tinu/fismo/trunk/mesh/SmallTongue_2nd_new.xda')
+    stop
+#    mf.readResults('/scratch/tinu/fismo/last_solution.xda')
 
 #     mf.readFile('/home/tinu/projects/libmesh/ex2/a2.xda')
 #     mf.writeFile('/home/tinu/projects/libmesh/ex2/a3.xda', bcond = mf.bcond)
